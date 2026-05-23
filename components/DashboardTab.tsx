@@ -1,0 +1,601 @@
+'use client';
+
+import React, { useState } from "react";
+import { Contact, Deal, Task, Activity, CRMGoals } from "@/lib/types";
+
+interface DashboardTabProps {
+  contacts: Contact[];
+  deals: Deal[];
+  tasks: Task[];
+  activities: Activity[];
+  goals: CRMGoals;
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
+  setActivities: React.Dispatch<React.SetStateAction<Activity[]>>;
+  onReviewInactiveLeads: () => void;
+}
+
+export default function DashboardTab({
+  contacts,
+  deals,
+  tasks,
+  activities,
+  goals,
+  setTasks,
+  setActivities,
+  onReviewInactiveLeads,
+}: DashboardTabProps) {
+  // AI Insights State
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiInsights, setAiInsights] = useState<{
+    summary?: string;
+    achievements?: string[];
+    risks?: string[];
+    recommendations?: { title: string; description: string }[];
+    predictedRevenue?: string;
+  } | null>(null);
+  const [showAiModal, setShowAiModal] = useState(false);
+
+  // Quick Task Input State
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskAssociated, setNewTaskAssociated] = useState("Direct Task");
+  const [newTaskPriority, setNewTaskPriority] = useState<"Urgent" | "Medium" | "Low">("Medium");
+
+  // Chart Month Interactivity
+  const [hoveredMonth, setHoveredMonth] = useState<string | null>(null);
+  const [selectedMonthData, setSelectedMonthData] = useState<{
+    month: string;
+    value: string;
+    label: string;
+  } | null>({ month: "Nov", value: "$280k", label: "Receita Realizada" });
+
+  const chartData = [
+    { key: "Jul", month: "Jul", value: "$185k", height: "h-32", bgClass: "bg-blue-500/40", fullValue: 185000 },
+    { key: "Ago", month: "Ago", value: "$210k", height: "h-36", bgClass: "bg-blue-500/60", fullValue: 210000 },
+    { key: "Set", month: "Set", value: "$195k", height: "h-34", bgClass: "bg-blue-500/50", fullValue: 195000 },
+    { key: "Out", month: "Out", value: "$245k", height: "h-38", bgClass: "bg-blue-500/80", fullValue: 245000 },
+    { key: "Nov", month: "Nov", value: "$280k", height: "h-40", bgClass: "bg-blue-500", fullValue: 280000 },
+    { key: "Dez", month: "Dez", value: "$168k (atual)", height: "h-24", bgClass: "bg-blue-500/30 border-t-2 border-dashed border-blue-500", fullValue: 168000 },
+  ];
+
+  // Dynamic calculations
+  const totalRevenue = deals
+    .filter((d) => d.stage === "Won")
+    .reduce((sum, d) => sum + d.value, 0);
+
+  const activeDealsCount = deals.filter(
+    (d) => d.stage !== "Won" && d.stage !== "Lost"
+  ).length;
+
+  const urgentTasksCount = tasks.filter((t) => !t.completed && t.priority === "Urgent").length;
+
+  // Toggle tasks
+  const handleToggleTask = (taskId: string) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
+    );
+  };
+
+  // Add Task
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+
+    const newTask: Task = {
+      id: Math.random().toString(),
+      title: newTaskTitle,
+      associatedWith: newTaskAssociated,
+      completed: false,
+      priority: newTaskPriority,
+      dueDate: "Today",
+    };
+
+    setTasks((prev) => [newTask, ...prev]);
+
+    // Add activity log
+    const newActivity: Activity = {
+      id: Math.random().toString(),
+      type: "contact",
+      title: `Task created: ${newTaskTitle}`,
+      sub: `Set to ${newTaskPriority} priority`,
+      time: "Just now",
+    };
+    setActivities((prev) => [newActivity, ...prev]);
+
+    // Reset fields
+    setNewTaskTitle("");
+    setNewTaskPriority("Medium");
+  };
+
+  // Trigger Gemini AI Insights
+  const generateInsights = async () => {
+    setAiLoading(true);
+    setShowAiModal(true);
+    try {
+      const response = await fetch("/api/gemini/insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contacts, deals, tasks }),
+      });
+      const data = await response.json();
+      if (data.success && data.insights) {
+        setAiInsights(data.insights);
+      } else {
+        throw new Error(data.error || "Failed to process analytics snapshot.");
+      }
+    } catch (err: any) {
+      setAiInsights({
+        summary: "Erro ao carregar insights preditivos.",
+        achievements: ["Sua receita alcançou $1.28M impulsionada por fechamentos recentes."],
+        risks: ["Alguns clientes importantes estão sem interação registrada há mais de 3 dias."],
+        recommendations: [
+          {
+            title: "Contato imediato via email",
+            description: "Escreva para Jane Doe da Acme Corporation para discutir novas propostas comerciais."
+          }
+        ],
+        predictedRevenue: "Previsão padrão estimada em $1.5M com base nas probabilidades cadastradas."
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8 animate-fadeIn">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Sales Overview</h1>
+          <p className="text-sm text-on-surface-variant mt-1">Bem-vindo de volta, Alex. Aqui está o desempenho do seu pipeline hoje.</p>
+        </div>
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          {/* AI Insights activator */}
+          <button
+            onClick={generateInsights}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg transition-all shadow-md active:scale-95 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">ambient_lighting</span>
+            Analisar com IA Gemini
+          </button>
+          <div className="flex gap-1 bg-surface-container-low p-1 rounded-lg border border-outline-variant/35">
+            <button className="px-3 py-1 bg-white text-on-surface font-semibold text-xs rounded shadow-sm">MTD</button>
+            <button className="px-3 py-1 text-on-surface-variant font-medium text-xs hover:bg-surface-container-high rounded transition-colors">QTD</button>
+            <button className="px-3 py-1 text-on-surface-variant font-medium text-xs hover:bg-surface-container-high rounded transition-colors">YTD</button>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Stats Grid */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Revenue */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm relative overflow-hidden group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
+              <span className="material-symbols-outlined text-[20px]">payments</span>
+            </div>
+            <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">trending_up</span>
+              12.5%
+            </span>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Lucro Total Acumulado</p>
+          <h2 className="text-2xl font-extrabold text-on-surface mt-1">
+            ${totalRevenue.toLocaleString()}
+          </h2>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+        </div>
+
+        {/* Conversion Rate */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm relative overflow-hidden group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-purple-50 text-purple-700 rounded-lg">
+              <span className="material-symbols-outlined text-[20px]">filter_alt</span>
+            </div>
+            <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">trending_up</span>
+              3.2%
+            </span>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Taxa de Conversão</p>
+          <h2 className="text-2xl font-extrabold text-on-surface mt-1">24.8%</h2>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+        </div>
+
+        {/* Active Deals */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm group relative overflow-hidden">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-amber-50 text-amber-700 rounded-lg">
+              <span className="material-symbols-outlined text-[20px]">work</span>
+            </div>
+            <span className="text-rose-700 bg-rose-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">trending_down</span>
+              1.4%
+            </span>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Deals Ativos no Funil</p>
+          <h2 className="text-2xl font-extrabold text-on-surface mt-1">{activeDealsCount}</h2>
+        </div>
+
+        {/* Avg Deal Cycle */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-slate-50 text-slate-700 rounded-lg">
+              <span className="material-symbols-outlined text-[20px]">timer</span>
+            </div>
+            <span className="text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded text-xs font-semibold">Estável</span>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Ciclo Médio de Venda</p>
+          <h2 className="text-2xl font-extrabold text-on-surface mt-1">18 Dias</h2>
+        </div>
+      </section>
+
+      {/* Main Bar Chart & Goals Segment */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Sales Funnel Chart */}
+        <div className="lg:col-span-8 bg-white rounded-xl border border-outline-variant/40 shadow-sm p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-base font-bold text-on-surface">Receita Semestral</h3>
+                <p className="text-xs text-on-surface-variant">Desempenho histórico de faturamento focado no faturamento executivo.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-[11px] text-on-surface-variant">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                  Receita Realizada
+                </span>
+              </div>
+            </div>
+
+            {/* Displaying selected segment details */}
+            {selectedMonthData && (
+              <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between text-xs animate-fadeIn">
+                <span>Mês Selecionado: <strong>{selectedMonthData.month}</strong></span>
+                <span>Faturamento: <strong className="text-blue-600">{selectedMonthData.value}</strong></span>
+                <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                  {selectedMonthData.label}
+                </span>
+              </div>
+            )}
+
+            {/* Simulated Chart using customized styled tailwind elements for perfect reactivity */}
+            <div className="h-64 flex items-end gap-3 md:gap-6 px-2 border-b border-outline-variant/30 pb-2 pt-4">
+              {chartData.map((d) => (
+                <div
+                  key={d.key}
+                  className="flex-1 flex flex-col items-center gap-2 h-full justify-end cursor-pointer group"
+                  onMouseEnter={() => setHoveredMonth(d.month)}
+                  onMouseLeave={() => setHoveredMonth(null)}
+                  onClick={() => setSelectedMonthData({ month: d.month, value: d.value, label: d.month === "Dez" ? "Faturamento Projetado" : "Receita Realizada" })}
+                >
+                  <div className="relative w-full flex justify-center items-end h-full">
+                    {/* Hover indicator tooltip */}
+                    {(hoveredMonth === d.month || (selectedMonthData && selectedMonthData.month === d.month)) && (
+                      <div className="absolute -top-10 bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow-lg z-20 whitespace-nowrap animate-fadeIn">
+                        {d.value}
+                      </div>
+                    )}
+                    <div
+                      className={`w-full rounded-t-md transition-all duration-300 min-h-[16px] ${
+                        selectedMonthData && selectedMonthData.month === d.month
+                          ? "bg-blue-600 shadow-md transform scale-x-105"
+                          : "bg-blue-500 hover:bg-blue-600"
+                      } ${d.height}`}
+                    ></div>
+                  </div>
+                  <span className={`text-[11px] font-semibold ${selectedMonthData && selectedMonthData.month === d.month ? "text-blue-600 font-bold" : "text-on-surface-variant"}`}>
+                    {d.month}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-[10px] text-outline mt-3 flex items-center gap-1">
+            <span className="material-symbols-outlined text-xs">info</span>
+            Clique em qualquer barra do gráfico para detalhar o faturamento individualizado.
+          </p>
+        </div>
+
+        {/* Monthly Goals progress widgets */}
+        <div className="lg:col-span-4 bg-white rounded-xl border border-outline-variant/40 shadow-sm p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="text-base font-bold text-on-surface mb-6">Metas Comerciais do Mês</h3>
+            <div className="space-y-6">
+              {/* Revenue target progression */}
+              <div>
+                <div className="flex justify-between items-center mb-1 bg-slate-50 p-1.5 rounded">
+                  <span className="text-xs font-semibold text-on-surface-variant">Faturamento Mensal</span>
+                  <span className="text-xs font-bold text-on-surface">82%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
+                  <div className="bg-slate-950 h-full w-[82%] rounded-full transition-all duration-500"></div>
+                </div>
+                <div className="flex justify-between text-[10px] text-outline mt-1 px-1">
+                  <span>Meta de $1.5M</span>
+                  <span>Alcançado: $1,28M</span>
+                </div>
+              </div>
+
+              {/* Customer count progression */}
+              <div>
+                <div className="flex justify-between items-center mb-1 bg-slate-50 p-1.5 rounded">
+                  <span className="text-xs font-semibold text-on-surface-variant">Novos Clientes</span>
+                  <span className="text-xs font-bold text-on-surface">65%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
+                  <div className="bg-blue-600 h-full w-[65%] rounded-full transition-all duration-500"></div>
+                </div>
+                <div className="flex justify-between text-[10px] text-outline mt-1 px-1">
+                  <span>Meta de 200 contas</span>
+                  <span>Ativos: 130</span>
+                </div>
+              </div>
+
+              {/* Lead quality scorecard */}
+              <div>
+                <div className="flex justify-between items-center mb-1 bg-slate-50 p-1.5 rounded">
+                  <span className="text-xs font-semibold text-on-surface-variant">Lead Quality Score</span>
+                  <span className="text-xs font-bold text-on-surface">94%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
+                  <div className="bg-emerald-500 h-full w-[94%] rounded-full transition-all duration-500"></div>
+                </div>
+                <div className="flex justify-between text-[10px] text-outline mt-1 px-1">
+                  <span>Média Executiva</span>
+                  <span>4.7 de 5 estrelas</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-outline-variant/30 pt-4 mt-6">
+            <div className="p-3 bg-blue-50/50 rounded-lg text-[11px] text-blue-800 leading-relaxed">
+              <strong>Predição IA:</strong> Com 2 deals em estágio de negociação avançada, há <strong>74%</strong> de chance de superar a meta até o dia 30.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row: Tasks & Timeline */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Pending Tasks card */}
+        <div className="bg-white rounded-xl border border-outline-variant/40 shadow-sm p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-base font-bold text-on-surface">Tarefas Pendentes</h3>
+                <p className="text-xs text-on-surface-variant">Agendamentos e ações comerciais de hoje.</p>
+              </div>
+              {urgentTasksCount > 0 && (
+                <span className="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[11px] font-semibold animate-pulse">
+                  {urgentTasksCount} Urgentes
+                </span>
+              )}
+            </div>
+
+            {/* Quick adding task inline form */}
+            <form onSubmit={handleAddTask} className="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col gap-2">
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Nova Tarefa Comercial</span>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ex: Ligar para Sarah Miller"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  className="flex-1 bg-white border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:ring-1 focus:ring-primary outline-none"
+                />
+                <select
+                  value={newTaskPriority}
+                  onChange={(e) => setNewTaskPriority(e.target.value as any)}
+                  className="bg-white border border-outline-variant/50 px-2 py-1.5 rounded text-xs select-none outline-none text-on-surface-variant"
+                >
+                  <option value="Urgent">Urgente</option>
+                  <option value="Medium">Média</option>
+                  <option value="Low">Baixa</option>
+                </select>
+                <button
+                  type="submit"
+                  className="px-3 bg-slate-900 text-white rounded text-xs font-semibold hover:bg-slate-800 transition-colors"
+                >
+                  +
+                </button>
+              </div>
+            </form>
+
+            {/* Tasks listing with scroll limit */}
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {tasks.length === 0 ? (
+                <p className="text-xs text-outline italic text-center py-6">Nenhuma tarefa pendente registrada.</p>
+              ) : (
+                tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className={`flex items-start gap-3 p-3 rounded-lg border border-outline-variant/20 hover:bg-surface-container-low transition-colors group ${
+                      task.completed ? "opacity-55 line-through bg-slate-50/50" : "bg-white"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={() => handleToggleTask(task.id)}
+                      className="mt-1 h-4 w-4 rounded border-outline-variant text-black focus:ring-black cursor-pointer"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-bold text-on-surface leading-tight ${task.completed ? "line-through text-outline" : ""}`}>
+                        {task.title}
+                      </p>
+                      <p className="text-[10px] text-on-surface-variant/80 mt-0.5">
+                        {task.associatedWith} • Prazo: <span className="font-semibold text-slate-800">{task.dueDate}</span>
+                      </p>
+                    </div>
+                    <div>
+                      {task.priority === "Urgent" && (
+                        <span className="text-[9px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 border border-rose-100 rounded">HOJE</span>
+                      )}
+                      {task.priority === "Medium" && (
+                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 border border-amber-100 rounded">MÉDIO</span>
+                      )}
+                      {task.priority === "Low" && (
+                        <span className="text-[9px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 border border-slate-200 rounded">AVULSO</span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activities timeline card */}
+        <div className="bg-white rounded-xl border border-outline-variant/40 shadow-sm p-6 overflow-hidden">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-base font-bold text-on-surface">Histórico de Atividades</h3>
+              <p className="text-xs text-on-surface-variant">Log de atualizações de vendas em tempo real.</p>
+            </div>
+            <span className="text-[10px] text-outline font-semibold uppercase tracking-wider">Histórico</span>
+          </div>
+
+          <div className="relative space-y-4 max-h-96 overflow-y-auto pr-1 before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
+            {activities.map((activity) => (
+              <div key={activity.id} className="relative pl-12 flex gap-2 justify-between items-start">
+                {/* Timeline circle icon indicator */}
+                <div className="absolute left-0 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white z-10 antialiased shadow-sm">
+                  {activity.type === "closed" && (
+                    <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[15px]">verified</span>
+                    </div>
+                  )}
+                  {activity.type === "email" && (
+                    <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-700 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[15px]">mail</span>
+                    </div>
+                  )}
+                  {activity.type === "contact" && (
+                    <div className="w-8 h-8 rounded-full bg-amber-50 border border-amber-100 text-amber-700 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[15px]">person_add</span>
+                    </div>
+                  )}
+                  {activity.type === "call" && (
+                    <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[15px]">call</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-xs text-on-surface">
+                    <strong className="text-on-surface font-semibold">{activity.title.split(":")[0]}:</strong>
+                    {activity.title.split(":")[1] || activity.title}
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant/95 mt-0.5" dangerouslySetInnerHTML={{ __html: activity.sub }} />
+                </div>
+                <span className="text-[9px] text-outline font-semibold whitespace-nowrap self-start bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                  {activity.time}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* GEMINI AI ANALYTICS DIALOG/MODAL */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[85vh] overflow-y-auto flex flex-col justify-between p-6">
+            <div>
+              <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center animate-pulse">
+                    <span className="material-symbols-outlined text-sm">ambient_lighting</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Relatório de Insights Preditivos</h3>
+                    <p className="text-xs text-slate-500">Mapeamento inteligente da saúde do pipeline gerado por Gemini IA.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAiModal(false)}
+                  className="p-1 px-2.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 font-bold transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {aiLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <div className="w-10 h-10 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
+                  <p className="text-xs text-slate-600 font-medium">Lendo banco de dados e preparando prognóstico...</p>
+                  <p className="text-[10px] text-slate-400">Essa operação utiliza chamada de rede segura para Gemini no servidor.</p>
+                </div>
+              ) : (
+                <div className="space-y-5 text-slate-800">
+                  {/* Summary */}
+                  <div className="bg-slate-900 text-white p-4 rounded-lg">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Diagnóstico Geral</p>
+                    <p className="text-sm leading-relaxed">{aiInsights?.summary}</p>
+                  </div>
+
+                  {/* Achievements and progress indicators */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-emerald-50/50 p-4 rounded-lg border border-emerald-100">
+                      <span className="text-xs font-bold text-emerald-800 block mb-2 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">sentiment_satisfied</span>
+                        Pontos Fortes Detectados
+                      </span>
+                      <ul className="list-disc pl-4 text-xs space-y-1 text-emerald-950">
+                        {aiInsights?.achievements?.map((ach, i) => (
+                          <li key={i}>{ach}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="bg-rose-50/50 p-4 rounded-lg border border-rose-100">
+                      <span className="text-xs font-bold text-rose-800 block mb-2 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">warning</span>
+                        Alertas de Risco
+                      </span>
+                      <ul className="list-disc pl-4 text-xs space-y-1 text-rose-950">
+                        {aiInsights?.risks?.map((risk, i) => (
+                          <li key={i}>{risk}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Concrete recommendation list */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ações Sugeridas Recomendadas pelo Gemini</h4>
+                    <div className="space-y-2">
+                      {aiInsights?.recommendations?.map((rec, i) => (
+                        <div key={i} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <p className="text-xs font-bold text-slate-900">{rec.title}</p>
+                          <p className="text-xs text-slate-600 mt-1">{rec.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Predicted Revenue */}
+                  <div className="p-3 bg-blue-50 text-blue-900 border border-blue-100 rounded-lg text-xs flex justify-between items-center">
+                    <span>💡 Forecast de faturamento para próximo mês:</span>
+                    <strong className="font-bold text-blue-950">{aiInsights?.predictedRevenue}</strong>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-slate-100 pt-4 mt-6 text-right">
+              <button
+                onClick={() => setShowAiModal(false)}
+                className="px-4 py-2 border border-slate-200 text-xs text-slate-700 hover:bg-slate-50 font-bold rounded-lg transition-colors"
+              >
+                Voltar ao Painel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
