@@ -61,7 +61,7 @@ export default function AnalyticsTab({ deals }: AnalyticsTabProps) {
                       {data.count} deals cadastrados
                     </span>
                     <span className="font-extrabold relative z-10 text-slate-900 text-[12px]">
-                      ${data.value.toLocaleString()}
+                      ${data.value.toLocaleString("pt-BR")}
                     </span>
                   </div>
                 </div>
@@ -90,7 +90,7 @@ export default function AnalyticsTab({ deals }: AnalyticsTabProps) {
                     <span className="font-bold text-slate-900">{d.stage}</span>
                     <span className="text-[10px] text-slate-500 block">{d.count} deals • {perc}% representatividade</span>
                   </div>
-                  <strong className="text-slate-950 font-extrabold text-[13px]">${d.value.toLocaleString()}</strong>
+                  <strong className="text-slate-950 font-extrabold text-[13px]">${d.value.toLocaleString("pt-BR")}</strong>
                 </div>
               );
             })}

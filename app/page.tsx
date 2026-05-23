@@ -2,6 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import { Contact, Deal, Task, Activity, CRMGoals } from "@/lib/types";
+import { 
+  LayoutDashboard, 
+  KanbanSquare, 
+  Users, 
+  Handshake, 
+  TrendingUp, 
+  HelpCircle, 
+  Settings, 
+  Search, 
+  Plus, 
+  Bell, 
+  Sparkles,
+  Menu,
+  X
+} from "lucide-react";
 
 // Import modules
 import DashboardTab from "@/components/DashboardTab";
@@ -237,64 +252,21 @@ export default function RootPage() {
   const [currentTab, setCurrentTab] = useState<
     "dashboard" | "pipeline" | "contacts" | "deals" | "analytics" | "settings" | "support"
   >("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // CRM State databases
-  const [contacts, setContacts] = useState<Contact[]>(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("nexus_contacts");
-      if (cached) return JSON.parse(cached);
-    }
-    return INITIAL_CONTACTS;
-  });
-
-  const [deals, setDeals] = useState<Deal[]>(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("nexus_deals");
-      if (cached) return JSON.parse(cached);
-    }
-    return INITIAL_DEALS;
-  });
-
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("nexus_tasks");
-      if (cached) return JSON.parse(cached);
-    }
-    return INITIAL_TASKS;
-  });
-
-  const [activities, setActivities] = useState<Activity[]>(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("nexus_activities");
-      if (cached) return JSON.parse(cached);
-    }
-    return INITIAL_ACTIVITIES;
-  });
-
-  const [goals, setGoals] = useState<CRMGoals>(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("nexus_goals");
-      if (cached) return JSON.parse(cached);
-    }
-    return INITIAL_GOALS;
-  });
+  const [mounted, setMounted] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
+  const [deals, setDeals] = useState<Deal[]>(INITIAL_DEALS);
+  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [activities, setActivities] = useState<Activity[]>(INITIAL_ACTIVITIES);
+  const [goals, setGoals] = useState<CRMGoals>(INITIAL_GOALS);
 
   // Active user details
-  const [profileName, setProfileName] = useState(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("nexus_profile_name");
-      if (cached) return cached;
-    }
-    return "Alex";
-  });
-
-  const [profilePic, setProfilePic] = useState(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("nexus_profile_pic");
-      if (cached) return cached;
-    }
-    return "https://lh3.googleusercontent.com/aida-public/AB6AXuCarguWrWz5TWuyV6J_UVDN5rwVyzWcZMTtr52bjn07D7M9xSdszI53dsc5UF585772DUC5tWmmbHW55R7ThXndO9RlF_e6oI6SyhTXr9W1yTbwdiUO9Bglwg74xc8lGjvrINyxai500AmXaOvTlxAZUwmPf5pvVLcdJu9oJoeJ78_a37zTkMzjS6e4M0nZMgHfm3kB6XFBkxL3rwY0QlUsbiRTcbIylcaywtB6k9EukHfT19o1-PZYQOeK-TLPzKcY6LLKx0-VKqg";
-  });
+  const [profileName, setProfileName] = useState("Bruno");
+  const [profilePic, setProfilePic] = useState(
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuCarguWrWz5TWuyV6J_UVDN5rwVyzWcZMTtr52bjn07D7M9xSdszI53dsc5UF585772DUC5tWmmbHW55R7ThXndO9RlF_e6oI6SyhTXr9W1yTbwdiUO9Bglwg74xc8lGjvrINyxai500AmXaOvTlxAZUwmPf5pvVLcdJu9oJoeJ78_a37zTkMzjS6e4M0nZMgHfm3kB6XFBkxL3rwY0QlUsbiRTcbIylcaywtB6k9EukHfT19o1-PZYQOeK-TLPzKcY6LLKx0-VKqg"
+  );
 
   // Filter inactive trigger (from AI widget)
   const [filterInactiveOnly, setFilterInactiveOnly] = useState(false);
@@ -305,35 +277,98 @@ export default function RootPage() {
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  // Handle client-side state hydration
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      /* eslint-disable react-hooks/set-state-in-effect */
+      try {
+        const cachedContacts = localStorage.getItem("nexus_contacts");
+        if (cachedContacts) setContacts(JSON.parse(cachedContacts));
+      } catch (e) {
+        console.error("Error loading cached contacts", e);
+      }
+
+      try {
+        const cachedDeals = localStorage.getItem("nexus_deals");
+        if (cachedDeals) setDeals(JSON.parse(cachedDeals));
+      } catch (e) {
+        console.error("Error loading cached deals", e);
+      }
+
+      try {
+        const cachedTasks = localStorage.getItem("nexus_tasks");
+        if (cachedTasks) setTasks(JSON.parse(cachedTasks));
+      } catch (e) {
+        console.error("Error loading cached tasks", e);
+      }
+
+      try {
+        const cachedActivities = localStorage.getItem("nexus_activities");
+        if (cachedActivities) setActivities(JSON.parse(cachedActivities));
+      } catch (e) {
+        console.error("Error loading cached activities", e);
+      }
+
+      try {
+        const cachedGoals = localStorage.getItem("nexus_goals");
+        if (cachedGoals) setGoals(JSON.parse(cachedGoals));
+      } catch (e) {
+        console.error("Error loading cached goals", e);
+      }
+
+      try {
+        const cachedProfileName = localStorage.getItem("nexus_profile_name");
+        if (cachedProfileName) setProfileName(cachedProfileName);
+      } catch (e) {
+        console.error("Error loading cached profile name", e);
+      }
+
+      try {
+        const cachedProfilePic = localStorage.getItem("nexus_profile_pic");
+        if (cachedProfilePic) setProfilePic(cachedProfilePic);
+      } catch (e) {
+        console.error("Error loading cached profile pic", e);
+      }
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+    setMounted(true);
+  }, []);
 
   // Sync cache changes
   useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("nexus_contacts", JSON.stringify(contacts));
-  }, [contacts]);
+  }, [contacts, mounted]);
 
   useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("nexus_deals", JSON.stringify(deals));
-  }, [deals]);
+  }, [deals, mounted]);
 
   useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("nexus_tasks", JSON.stringify(tasks));
-  }, [tasks]);
+  }, [tasks, mounted]);
 
   useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("nexus_activities", JSON.stringify(activities));
-  }, [activities]);
+  }, [activities, mounted]);
 
   useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("nexus_goals", JSON.stringify(goals));
-  }, [goals]);
+  }, [goals, mounted]);
 
   useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("nexus_profile_name", profileName);
-  }, [profileName]);
+  }, [profileName, mounted]);
 
   useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("nexus_profile_pic", profilePic);
-  }, [profilePic]);
+  }, [profilePic, mounted]);
 
   // Execute review list click function on dashboard
   const handleReviewInactiveLeadsClick = () => {
@@ -347,81 +382,114 @@ export default function RootPage() {
 
   return (
     <div className="bg-[#f7f9fb] text-slate-800 min-h-screen antialiased flex">
+      {/* SIDEBAR BACKDROP ON MOBILE/TABLET */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/45 z-45 md:hidden transition-opacity duration-300"
+        />
+      )}
+
       {/* SIDEBAR NAVIGATION (POLISHED WITH HIGH INTENT AS SHOWN IN DESIGN METADATA) */}
-      <aside className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-[#eceef0] flex flex-col p-4 gap-2 z-50">
-        <div className="flex items-center gap-3 px-2 py-4 mb-4">
-          <div className="w-10 h-10 bg-black text-white rounded flex items-center justify-center font-bold">
-            <span className="material-symbols-outlined">hub</span>
+      <aside className={`fixed left-0 top-0 h-full w-[280px] bg-white border-r border-[#eceef0] flex flex-col p-4 gap-2 z-50 transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
+        <div className="flex items-center justify-between px-2 py-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-black text-white rounded flex items-center justify-center font-bold">
+              <Sparkles className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <span className="font-extrabold text-[18px] text-black tracking-tight leading-tight block">BK Higienização</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Gestão de Vendas</span>
+            </div>
           </div>
-          <div>
-            <span className="font-extrabold text-[18px] text-black tracking-tight leading-tight block">Nexus CRM</span>
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Enterprise Edition</span>
-          </div>
+          <button 
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden p-1.5 hover:bg-slate-100 rounded text-slate-500 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <nav className="flex-grow flex flex-col gap-1">
           {/* Dashboard action nav link */}
           <button
-            onClick={() => setCurrentTab("dashboard")}
+            onClick={() => {
+              setCurrentTab("dashboard");
+              setSidebarOpen(false);
+            }}
             className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
               currentTab === "dashboard"
                 ? "bg-[#d3e4fe] text-[#0b1c30]"
                 : "text-slate-600 hover:bg-[#f2f4f6]"
             } cursor-pointer`}
           >
-            <span className="material-symbols-outlined text-sm">dashboard</span>
+            <LayoutDashboard className="w-4 h-4" />
             <span>Dashboard</span>
           </button>
 
           {/* Pipeline kanban action link */}
           <button
-            onClick={() => setCurrentTab("pipeline")}
+            onClick={() => {
+              setCurrentTab("pipeline");
+              setSidebarOpen(false);
+            }}
             className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
               currentTab === "pipeline"
                 ? "bg-[#d3e4fe] text-[#0b1c30]"
                 : "text-slate-600 hover:bg-[#f2f4f6]"
             } cursor-pointer`}
           >
-            <span className="material-symbols-outlined text-sm">view_kanban</span>
-            <span>Pipeline Funil</span>
+            <KanbanSquare className="w-4 h-4" />
+            <span>Vendas</span>
           </button>
 
           {/* Contacts action link */}
           <button
-            onClick={() => setCurrentTab("contacts")}
+            onClick={() => {
+              setCurrentTab("contacts");
+              setSidebarOpen(false);
+            }}
             className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
               currentTab === "contacts"
                 ? "bg-[#d3e4fe] text-[#0b1c30]"
                 : "text-slate-600 hover:bg-[#f2f4f6]"
             } cursor-pointer`}
           >
-            <span className="material-symbols-outlined text-sm font-semibold">group</span>
+            <Users className="w-4 h-4" />
             <span>Contatos</span>
           </button>
 
           {/* Deals ledger link */}
           <button
-            onClick={() => setCurrentTab("deals")}
+            onClick={() => {
+              setCurrentTab("deals");
+              setSidebarOpen(false);
+            }}
             className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
               currentTab === "deals"
                 ? "bg-[#d3e4fe] text-[#0b1c30]"
                 : "text-slate-600 hover:bg-[#f2f4f6]"
             } cursor-pointer`}
           >
-            <span className="material-symbols-outlined text-sm font-semibold">handshake</span>
-            <span>Negócios</span>
+            <Handshake className="w-4 h-4" />
+            <span>Serviços</span>
           </button>
 
           {/* Analytics link */}
           <button
-            onClick={() => setCurrentTab("analytics")}
+            onClick={() => {
+              setCurrentTab("analytics");
+              setSidebarOpen(false);
+            }}
             className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
               currentTab === "analytics"
                 ? "bg-[#d3e4fe] text-[#0b1c30]"
                 : "text-slate-600 hover:bg-[#f2f4f6]"
             } cursor-pointer`}
           >
-            <span className="material-symbols-outlined text-sm font-semibold">insights</span>
+            <TrendingUp className="w-4 h-4" />
             <span>Performance</span>
           </button>
         </nav>
@@ -429,42 +497,54 @@ export default function RootPage() {
         {/* Support and Settings fixed section */}
         <div className="border-t border-[#eceef0] pt-4 mt-auto flex flex-col gap-1">
           <button
-            onClick={() => setCurrentTab("support")}
+            onClick={() => {
+              setCurrentTab("support");
+              setSidebarOpen(false);
+            }}
             className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
               currentTab === "support"
                 ? "bg-[#d3e4fe] text-[#0b1c30]"
                 : "text-slate-600 hover:bg-[#f2f4f6]"
             } cursor-pointer`}
           >
-            <span className="material-symbols-outlined text-sm">contact_support</span>
-            <span>Suporte IA</span>
+            <HelpCircle className="w-4 h-4" />
+            <span>Suporte</span>
           </button>
 
           <button
-            onClick={() => setCurrentTab("settings")}
+            onClick={() => {
+              setCurrentTab("settings");
+              setSidebarOpen(false);
+            }}
             className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
               currentTab === "settings"
                 ? "bg-[#d3e4fe] text-[#0b1c30]"
                 : "text-slate-600 hover:bg-[#f2f4f6]"
             } cursor-pointer`}
           >
-            <span className="material-symbols-outlined text-sm">settings</span>
+            <Settings className="w-4 h-4" />
             <span>Configurações</span>
           </button>
         </div>
       </aside>
 
       {/* PRIMARY CENTRAL PANEL AREA */}
-      <div className="ml-[280px] flex-1 flex flex-col min-h-screen">
+      <div className="md:ml-[280px] ml-0 flex-1 flex flex-col min-h-screen w-full overflow-x-hidden">
         {/* Top Header navbar bar */}
-        <header className="h-16 bg-white border-b border-[#eceef0] flex justify-between items-center px-8 sticky top-0 z-40 shadow-xs">
-          {/* Quick search input */}
-          <div className="flex items-center gap-3">
+        <header className="h-16 bg-white border-b border-[#eceef0] flex justify-between items-center px-4 md:px-8 sticky top-0 z-40 shadow-xs">
+          {/* Quick search input or mobile menu button */}
+          <div className="flex items-center gap-2 md:gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-1.5 -ml-1 text-slate-650 hover:bg-slate-105 rounded-lg transition-colors cursor-pointer"
+            >
+              <Menu className="w-5 h-5 text-slate-700" />
+            </button>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">search</span>
               <input
                 type="text"
-                placeholder="Pesquisar contas de clientes..."
+                placeholder="Pesquisar..."
                 value={globalSearchTerm}
                 onChange={(e) => {
                   setGlobalSearchTerm(e.target.value);
@@ -474,14 +554,14 @@ export default function RootPage() {
                 }}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
-                className={`pl-9 pr-4 py-2 bg-[#f2f4f6] text-xs font-semibold rounded-full border-transparent focus:bg-white focus:border-[#c6c6cd] transition-all outline-none ${
-                  searchFocused ? "w-80" : "w-60"
+                className={`pl-9 pr-3 py-1.5 bg-[#f2f4f6] text-xs font-semibold rounded-full border-transparent focus:bg-white focus:border-[#c6c6cd] transition-all outline-none ${
+                  searchFocused ? "w-36 sm:w-72 md:w-80" : "w-24 sm:w-56 md:w-60"
                 }`}
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* CTA action button */}
             <button
               onClick={() => {
@@ -489,22 +569,22 @@ export default function RootPage() {
                   setCurrentTab("pipeline");
                 }
               }}
-              className="px-4 py-2 bg-[#000000] hover:bg-slate-900 font-bold text-xs text-white rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2.5 sm:px-4 py-2 bg-[#000000] hover:bg-slate-900 font-bold text-xs text-white rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-xs">add</span>
-              Add Deal
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Add Deal</span>
             </button>
 
-            <div className="h-6 w-px bg-[#eceef0] mx-1"></div>
+            <div className="h-6 w-px bg-[#eceef0] mx-0.5 sm:mx-1"></div>
 
             {/* Notification and support quick buttons */}
-            <div className="flex items-center gap-1 relative">
+            <div className="flex items-center gap-0.5 sm:gap-1 relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-2 hover:bg-slate-50 rounded-full text-slate-500 relative transition-colors cursor-pointer"
+                className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-full text-slate-500 relative transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm font-semibold">notifications</span>
-                <span className="absolute top-2 right-2 w-2 h-2 bg-rose-600 rounded-full border-2 border-white animate-pulse"></span>
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-600 rounded-full border border-white animate-pulse"></span>
               </button>
 
               {notificationsOpen && (
@@ -525,7 +605,7 @@ export default function RootPage() {
 
               <button
                 onClick={() => setCurrentTab("support")}
-                className="p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors cursor-pointer"
+                className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm font-semibold">help_outline</span>
               </button>
@@ -534,12 +614,12 @@ export default function RootPage() {
             {/* Active profile card */}
             <div
               onClick={() => setCurrentTab("settings")}
-              className="flex items-center gap-2 pl-2 border-l border-[#eceef0] cursor-pointer hover:opacity-85"
+              className="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-[#eceef0] cursor-pointer hover:opacity-85"
             >
               <img
                 src={profilePic}
                 alt="Executive"
-                className="w-8 h-8 rounded-full object-cover border border-[#c6c6cd]"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[#c6c6cd]"
               />
               <div className="hidden lg:block">
                 <span className="font-extrabold text-xs text-black block leading-none">{profileName}</span>
@@ -550,7 +630,7 @@ export default function RootPage() {
         </header>
 
         {/* CONTAINER CONTENT */}
-        <main className="p-8 max-w-[1440px] mx-auto w-full flex-grow">
+        <main className="p-4 md:p-8 max-w-[1440px] mx-auto w-full flex-grow">
           {currentTab === "dashboard" && (
             <DashboardTab
               contacts={contacts}

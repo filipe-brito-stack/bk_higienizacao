@@ -56,7 +56,7 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
       id: "act_move_" + dealId + "_" + updatedStage,
       type: updatedStage === "Won" ? "closed" : "contact",
       title: `Deal staged: ${deal.title}`,
-      sub: `Progresso: ${deal.stage} → <b>${updatedStage}</b> ($${deal.value.toLocaleString()})`,
+      sub: `Progresso: ${deal.stage} → <b>${updatedStage}</b> ($${deal.value.toLocaleString("pt-BR")})`,
       time: "Just now",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
@@ -87,7 +87,7 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
       id: "act_add_" + createdId,
       type: "contact",
       title: `Opportunity Added: ${createdDeal.title}`,
-      sub: `Sincronizado estágio <b>${createdDeal.stage}</b> com valor de $${createdDeal.value.toLocaleString()}`,
+      sub: `Sincronizado estágio <b>${createdDeal.stage}</b> com valor de $${createdDeal.value.toLocaleString("pt-BR")}`,
       time: "Just now",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
@@ -157,7 +157,7 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
                 </div>
                 {/* Capital Sum aggregate */}
                 <div className="text-[11px] font-bold text-outline uppercase tracking-wider mb-3 px-1 text-right border-b border-dashed border-slate-200 pb-1.5">
-                  Total: <span className="text-on-surface font-semibold">${totalSum.toLocaleString()}</span>
+                  Total: <span className="text-on-surface font-semibold">${totalSum.toLocaleString("pt-BR")}</span>
                 </div>
 
                 {/* Items wrapper */}
@@ -176,7 +176,7 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
                       <p className="text-xs font-bold text-slate-800 leading-tight mt-0.5">{deal.title}</p>
                       
                       <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-105">
-                        <span className="text-[11px] font-extrabold text-slate-700">${deal.value.toLocaleString()}</span>
+                        <span className="text-[11px] font-extrabold text-slate-700">${deal.value.toLocaleString("pt-BR")}</span>
                         <div className="text-[9px] bg-slate-50 text-slate-500 px-1.5 rounded font-bold border">
                           {deal.probability}%
                         </div>

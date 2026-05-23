@@ -51,12 +51,12 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Capacidade Total</span>
-          <h3 className="text-xl font-black text-slate-900">${totalPipelineVal.toLocaleString()}</h3>
+          <h3 className="text-xl font-black text-slate-900">${totalPipelineVal.toLocaleString("pt-BR")}</h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Soma de todos os deals ativos e terminados.</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Faturamento IA Ponderado (Est.)</span>
-          <h3 className="text-xl font-black text-blue-600">${Math.round(totalForecastVal).toLocaleString()}</h3>
+          <h3 className="text-xl font-black text-blue-600">${Math.round(totalForecastVal).toLocaleString("pt-BR")}</h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Ajustado de acordo com a probabilidade individual de cada estágio.</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
@@ -98,7 +98,7 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
                           className="bg-white border rounded px-2 py-1 w-24 text-right text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
                         />
                       ) : (
-                        <span className="font-extrabold text-slate-850">${deal.value.toLocaleString()}</span>
+                        <span className="font-extrabold text-slate-850">${deal.value.toLocaleString("pt-BR")}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">

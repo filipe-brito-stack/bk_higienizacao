@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Contact, Deal, Task, Activity, CRMGoals } from "@/lib/types";
+import { DollarSign, Filter, Briefcase, Timer, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
 
 interface DashboardTabProps {
   contacts: Contact[];
@@ -146,7 +147,7 @@ export default function DashboardTab({
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Sales Overview</h1>
-          <p className="text-sm text-on-surface-variant mt-1">Bem-vindo de volta, Alex. Aqui está o desempenho do seu pipeline hoje.</p>
+          <p className="text-sm text-on-surface-variant mt-1">Bem-vindo de volta, Bruno. Aqui está o desempenho do seu pipeline hoje.</p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto">
           {/* AI Insights activator */}
@@ -154,7 +155,7 @@ export default function DashboardTab({
             onClick={generateInsights}
             className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg transition-all shadow-md active:scale-95 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-sm">ambient_lighting</span>
+            <Sparkles className="w-4 h-4 text-amber-400" />
             Analisar com IA Gemini
           </button>
           <div className="flex gap-1 bg-surface-container-low p-1 rounded-lg border border-outline-variant/35">
@@ -171,16 +172,16 @@ export default function DashboardTab({
         <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm relative overflow-hidden group">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
-              <span className="material-symbols-outlined text-[20px]">payments</span>
+              <DollarSign className="w-5 h-5" />
             </div>
             <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">trending_up</span>
+              <TrendingUp className="w-3.5 h-3.5" />
               12.5%
             </span>
           </div>
           <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Lucro Total Acumulado</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
-            ${totalRevenue.toLocaleString()}
+            ${totalRevenue.toLocaleString("pt-BR")}
           </h2>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
         </div>
@@ -189,10 +190,10 @@ export default function DashboardTab({
         <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm relative overflow-hidden group">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-purple-50 text-purple-700 rounded-lg">
-              <span className="material-symbols-outlined text-[20px]">filter_alt</span>
+              <Filter className="w-5 h-5" />
             </div>
             <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">trending_up</span>
+              <TrendingUp className="w-3.5 h-3.5" />
               3.2%
             </span>
           </div>
@@ -205,10 +206,10 @@ export default function DashboardTab({
         <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm group relative overflow-hidden">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-amber-50 text-amber-700 rounded-lg">
-              <span className="material-symbols-outlined text-[20px]">work</span>
+              <Briefcase className="w-5 h-5" />
             </div>
             <span className="text-rose-700 bg-rose-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">trending_down</span>
+              <TrendingDown className="w-3.5 h-3.5" />
               1.4%
             </span>
           </div>
@@ -220,7 +221,7 @@ export default function DashboardTab({
         <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm group">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-slate-50 text-slate-700 rounded-lg">
-              <span className="material-symbols-outlined text-[20px]">timer</span>
+              <Timer className="w-5 h-5" />
             </div>
             <span className="text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded text-xs font-semibold">Estável</span>
           </div>
