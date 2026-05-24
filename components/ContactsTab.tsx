@@ -36,6 +36,7 @@ export default function ContactsTab({
   const [newAvatarUrl, setNewAvatarUrl] = useState("");
   const [newBirthMonth, setNewBirthMonth ] = useState("");
   const [newBirthYear, setNewBirthYear] = useState("");
+  const [birthDateInput, setBirthDateInput] = useState("");
   const [newAddress, setNewAddress] = useState("");
   const [newLatitude, setNewLatitude] = useState<number | null>(null);
   const [newLongitude, setNewLongitude] = useState<number | null>(null);
@@ -43,8 +44,46 @@ export default function ContactsTab({
 
   // Contact Editing / Direct Link Manager States
   const [editableContact, setEditableContact] = useState<Contact | null>(null);
+  const [editBirthDateInput, setEditBirthDateInput] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
+
+  // Helper to format/validate birth date as DD/MM
+  const handleBirthDateInputChange = (val: string, isEdit: boolean) => {
+    // Strip non-numbers
+    const cleanNumbers = val.replace(/\D/g, "");
+    // Limit to 4 characters (DDMM)
+    const limited = cleanNumbers.slice(0, 4);
+    
+    let formatted = "";
+    let day = "";
+    let month = "";
+    
+    if (limited.length > 0) {
+      day = limited.slice(0, 2);
+      if (limited.length > 2) {
+        month = limited.slice(2, 4);
+        formatted = `${day}/${month}`;
+      } else {
+        formatted = day;
+      }
+    }
+    
+    if (isEdit) {
+      setEditBirthDateInput(formatted);
+      if (editableContact) {
+        setEditableContact({
+          ...editableContact,
+          birthMonth: day || undefined,
+          birthYear: month || undefined,
+        });
+      }
+    } else {
+      setBirthDateInput(formatted);
+      setNewBirthMonth(day);
+      setNewBirthYear(month);
+    }
+  };
 
   // Gemini AI Draft States
   const [aiDraftLoading, setAiDraftLoading] = useState(false);
@@ -182,7 +221,19 @@ export default function ContactsTab({
     setNewAddress("");
     setNewLatitude(null);
     setNewLongitude(null);
+    setBirthDateInput("");
     setShowAddModal(false);
+  };
+
+  // Open edit modal and initialize state
+  const handleOpenEditModal = (contact: Contact) => {
+    setEditableContact(contact);
+    if (contact.birthMonth && contact.birthYear) {
+      setEditBirthDateInput(`${contact.birthMonth}/${contact.birthYear}`);
+    } else {
+      setEditBirthDateInput("");
+    }
+    setShowEditModal(true);
   };
 
   // Edit/Direct Link Update Handler
@@ -338,7 +389,7 @@ export default function ContactsTab({
               <tr>
                 <th className="px-6 py-4 w-12">Id</th>
                 <th className="px-6 py-4">Nome completo / Email</th>
-                <th className="px-6 py-4">Nascimento</th>
+                <th className="px-6 py-4">Aniversário</th>
                 <th className="px-6 py-4">Endereço / Localização</th>
                 <th className="px-6 py-4">Último contato</th>
                 <th className="px-6 py-4 text-right">Ação executiva</th>
@@ -365,7 +416,7 @@ export default function ContactsTab({
                       <td className="px-6 py-4 text-outline font-medium">#{startIndex + index + 1}</td>
                       <td className="px-6 py-4">
                         <div>
-                          <span className="font-bold text-on-surface block hover:underline cursor-pointer" onClick={() => { setEditableContact(contact); setShowEditModal(true); }}>
+                          <span className="font-bold text-on-surface block hover:underline cursor-pointer" onClick={() => handleOpenEditModal(contact)}>
                             {contact.name}
                           </span>
                           <span className="text-[10px] text-outline tracking-tight mt-0.5 block">{contact.email}</span>
@@ -410,7 +461,7 @@ export default function ContactsTab({
                             Pitch IA
                           </button>
                           <button
-                            onClick={() => { setEditableContact(contact); setShowEditModal(true); }}
+                            onClick={() => handleOpenEditModal(contact)}
                             className="p-1 px-1.5 hover:bg-slate-100 hover:text-black rounded text-[11px] font-bold transition-all text-outline"
                             title="Editar detalhes do contato"
                           >
@@ -491,41 +542,28 @@ export default function ContactsTab({
                 </div>
               </div>
 
-              <div>
-                <label className="text-[11px] font-bold text-slate-550 block mb-1">Telefone Principal</label>
-                <input
-                  type="text"
-                  value={editableContact.phone || ""}
-                  onChange={(e) => setEditableContact({ ...editableContact, phone: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Telefone Principal</label>
+                  <input
+                    type="text"
+                    value={editableContact.phone || ""}
+                    onChange={(e) => setEditableContact({ ...editableContact, phone: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium"
+                  />
+                </div>
 
-              {/* Data de Nascimento (Mês e Ano) - EDIT */}
-              <div>
-                <label className="text-[11px] font-bold text-slate-550 block mb-1">Data de Nascimento (Mês e Ano)</label>
-                <input
-                  type="month"
-                  value={editableContact.birthYear && editableContact.birthMonth ? `${editableContact.birthYear}-${editableContact.birthMonth}` : ""}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val) {
-                      const [year, month] = val.split("-");
-                      setEditableContact({
-                        ...editableContact,
-                        birthYear: year,
-                        birthMonth: month,
-                      });
-                    } else {
-                      setEditableContact({
-                        ...editableContact,
-                        birthYear: undefined,
-                        birthMonth: undefined,
-                      });
-                    }
-                  }}
-                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
-                />
+                {/* Aniversário (Dia e Mês) - EDIT */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Aniversário (DD/MM)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 25/12"
+                    value={editBirthDateInput}
+                    onChange={(e) => handleBirthDateInputChange(e.target.value, true)}
+                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                  />
+                </div>
               </div>
 
               {/* Endereço com Geolocalização Opcional - EDIT */}
@@ -613,36 +651,29 @@ export default function ContactsTab({
                 </div>
               </div>
 
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 block mb-1">Telefone Principal</label>
-                <input
-                  type="text"
-                  placeholder="+55 (11) 99999-9999"
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Telefone Principal</label>
+                  <input
+                    type="text"
+                    placeholder="+55 (11) 99999-9999"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                  />
+                </div>
 
-              {/* Data de Nascimento (Mês e Ano) */}
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 block mb-1">Data de Nascimento (Mês e Ano)</label>
-                <input
-                  type="month"
-                  value={newBirthYear && newBirthMonth ? `${newBirthYear}-${newBirthMonth}` : ""}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val) {
-                      const [year, month] = val.split("-");
-                      setNewBirthYear(year);
-                      setNewBirthMonth(month);
-                    } else {
-                      setNewBirthYear("");
-                      setNewBirthMonth("");
-                    }
-                  }}
-                  className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
-                />
+                {/* Aniversário (Dia e Mês) */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-505 block mb-1">Aniversário (DD/MM)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 25/12"
+                    value={birthDateInput}
+                    onChange={(e) => handleBirthDateInputChange(e.target.value, false)}
+                    className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                  />
+                </div>
               </div>
 
               {/* Endereço com Geolocalização Opcional */}
