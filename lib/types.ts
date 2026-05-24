@@ -9,6 +9,11 @@ export interface Contact {
   avatarUrl?: string;
   phone: string;
   owner: string;
+  birthMonth?: string;
+  birthYear?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Deal {

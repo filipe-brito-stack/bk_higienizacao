@@ -1,6 +1,6 @@
 {
   "name": "BK Higienização",
   "description": "Enterprise-grade Sales Dashboard and Predictive Pipeline Hub featuring full contact tracking, interactive Kanban pipeline, goals manager, and server-side Gemini AI insights.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

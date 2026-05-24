@@ -33,6 +33,12 @@ export default function ContactsTab({
   const [newStatus, setNewStatus] = useState<"Customer" | "Lead">("Lead");
   const [newPhone, setNewPhone] = useState("");
   const [newAvatarUrl, setNewAvatarUrl] = useState("");
+  const [newBirthMonth, setNewBirthMonth ] = useState("");
+  const [newBirthYear, setNewBirthYear] = useState("");
+  const [newAddress, setNewAddress] = useState("");
+  const [newLatitude, setNewLatitude] = useState<number | null>(null);
+  const [newLongitude, setNewLongitude] = useState<number | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   // Contact Editing / Direct Link Manager States
   const [editableContact, setEditableContact] = useState<Contact | null>(null);
@@ -58,9 +64,7 @@ export default function ContactsTab({
   const filteredContacts = contacts.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.role.toLowerCase().includes(searchTerm.toLowerCase());
+      c.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "All" || c.status === statusFilter;
 
@@ -82,22 +86,75 @@ export default function ContactsTab({
     setTimeout(() => setCopiedNotification(null), 3000);
   };
 
+  // Geolocation Grabber helper
+  const captureCurrentLocation = (isEdit: boolean) => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      alert("Geolocalização não é suportada por este dispositivo.");
+      return;
+    }
+
+    if (isEdit) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setEditableContact((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  latitude,
+                  longitude,
+                  address: prev.address || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+                }
+              : null
+          );
+          alert("Sua localização atual aproximada foi capturada com sucesso!");
+        },
+        (error) => {
+          console.error("Erro ao obter geolocalização:", error);
+          alert("Não foi possível acessar a localização. Verifique as permissões de GPS.");
+        }
+      );
+    } else {
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setNewLatitude(latitude);
+          setNewLongitude(longitude);
+          setNewAddress((prev) => prev || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          setIsLocating(false);
+          alert("Sua localização atual aproximada foi capturada com sucesso!");
+        },
+        (error) => {
+          console.error("Erro ao obter geolocalização:", error);
+          alert("Não foi possível acessar a localização. Verifique as permissões de GPS.");
+          setIsLocating(false);
+        }
+      );
+    }
+  };
+
   // Add Contact Handler
   const handleAddContact = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim() || !newEmail.trim() || !newCompany.trim()) return;
+    if (!newName.trim() || !newEmail.trim()) return;
 
     const newContact: Contact = {
       id: Math.random().toString(),
       name: newName,
       email: newEmail,
-      company: newCompany,
-      role: newRole || "Advisor",
-      status: newStatus,
+      company: "",
+      role: "",
+      status: "Lead",
       lastContact: "Just added",
       avatarUrl: newAvatarUrl || AVATAR_PRESETS[2].url,
       phone: newPhone || "+1 (555) 000-0000",
       owner: "Me",
+      birthMonth: newBirthMonth || undefined,
+      birthYear: newBirthYear || undefined,
+      address: newAddress || undefined,
+      latitude: newLatitude !== null ? newLatitude : undefined,
+      longitude: newLongitude !== null ? newLongitude : undefined,
     };
 
     setContacts((prev) => [newContact, ...prev]);
@@ -107,7 +164,7 @@ export default function ContactsTab({
       id: Math.random().toString(),
       type: "contact",
       title: `New Contact Created: ${newContact.name}`,
-      sub: `Added as dynamic <b>${newContact.status}</b> to represent ${newContact.company}`,
+      sub: `Added as dynamic represent`,
       time: "Just now",
     };
     setActivities((prev) => [newActivity, ...prev]);
@@ -119,6 +176,11 @@ export default function ContactsTab({
     setNewRole("");
     setNewPhone("");
     setNewAvatarUrl("");
+    setNewBirthMonth("");
+    setNewBirthYear("");
+    setNewAddress("");
+    setNewLatitude(null);
+    setNewLongitude(null);
     setShowAddModal(false);
   };
 
@@ -214,7 +276,7 @@ export default function ContactsTab({
           onClick={() => setShowAddModal(true)}
           className="px-4 py-2 bg-primary hover:bg-slate-900 text-on-primary rounded-lg text-xs font-bold transition-all active:scale-95 self-start sm:self-auto cursor-pointer"
         >
-          Add Contact
+          Adicionar Contato
         </button>
       </div>
 
@@ -244,33 +306,11 @@ export default function ContactsTab({
       {/* Table Filters Bar */}
       <div className="bg-white p-4 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Status filter dropdown */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-50 border border-outline-variant/35 rounded-lg">
-            <button
-              onClick={() => { setStatusFilter("All"); setCurrentPage(1); }}
-              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${statusFilter === "All" ? "bg-white text-on-surface shadow-xs" : "text-on-surface-variant hover:text-on-surface"}`}
-            >
-              Todos
-            </button>
-            <button
-              onClick={() => { setStatusFilter("Customer"); setCurrentPage(1); }}
-              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${statusFilter === "Customer" ? "bg-white text-emerald-700 shadow-xs" : "text-on-surface-variant hover:text-on-surface"}`}
-            >
-              Customer
-            </button>
-            <button
-              onClick={() => { setStatusFilter("Lead"); setCurrentPage(1); }}
-              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${statusFilter === "Lead" ? "bg-white text-blue-700 shadow-xs" : "text-on-surface-variant hover:text-on-surface"}`}
-            >
-              Leads
-            </button>
-          </div>
-
           <div className="relative">
             <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-outline">search</span>
             <input
               type="text"
-              placeholder="Filtrar por nome, empresa..."
+              placeholder="Filtrar por nome..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="pl-8 pr-3 py-1.5 bg-slate-50 border border-outline-variant/40 rounded-lg text-xs focus:ring-1 focus:ring-slate-900 outline-none w-48 md:w-60"
@@ -297,9 +337,8 @@ export default function ContactsTab({
               <tr>
                 <th className="px-6 py-4 w-12">Id</th>
                 <th className="px-6 py-4">Nome completo / Email</th>
-                <th className="px-6 py-4">Empresa</th>
-                <th className="px-6 py-4">Cargo comercial</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Nascimento</th>
+                <th className="px-6 py-4">Endereço / Localização</th>
                 <th className="px-6 py-4">Último contato</th>
                 <th className="px-6 py-4 text-right">Ação executiva</th>
               </tr>
@@ -307,7 +346,7 @@ export default function ContactsTab({
             <tbody className="divide-y divide-outline-variant/20 text-xs">
               {paginatedContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-16 text-outline italic">
+                  <td colSpan={6} className="text-center py-16 text-outline italic">
                     Nenhum contato coincide com os filtros configurados.
                   </td>
                 </tr>
@@ -321,44 +360,40 @@ export default function ContactsTab({
                     .toUpperCase();
 
                   return (
-                    <tr key={contact.id} className="hover:bg-slate-50/70 transition-colors group">
+                     <tr key={contact.id} className="hover:bg-slate-50/70 transition-colors group">
                       <td className="px-6 py-4 text-outline font-medium">#{startIndex + index + 1}</td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {contact.avatarUrl ? (
-                            <img
-                              src={contact.avatarUrl}
-                              alt={contact.name}
-                              className="w-9 h-9 rounded-full object-cover border border-outline-variant/40"
-                              onError={(e) => {
-                                // fallback to initials if image link breaks
-                                (e.target as HTMLElement).style.display = "none";
-                              }}
-                            />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs uppercase">
-                              {avatarInitials}
-                            </div>
-                          )}
-                          <div>
-                            <span className="font-bold text-on-surface block hover:underline cursor-pointer" onClick={() => { setEditableContact(contact); setShowEditModal(true); }}>
-                              {contact.name}
-                            </span>
-                            <span className="text-[10px] text-outline tracking-tight mt-0.5 block">{contact.email}</span>
-                          </div>
+                        <div>
+                          <span className="font-bold text-on-surface block hover:underline cursor-pointer" onClick={() => { setEditableContact(contact); setShowEditModal(true); }}>
+                            {contact.name}
+                          </span>
+                          <span className="text-[10px] text-outline tracking-tight mt-0.5 block">{contact.email}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-medium text-on-surface-variant">{contact.company}</td>
-                      <td className="px-6 py-4 text-on-surface-variant font-medium">{contact.role}</td>
-                      <td className="px-6 py-4">
-                        {contact.status === "Customer" ? (
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100">
-                            Customer
-                          </span>
+                      <td className="px-6 py-4 text-on-surface-variant font-medium">
+                        {contact.birthMonth && contact.birthYear ? (
+                          <span>{contact.birthMonth}/{contact.birthYear}</span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
-                            Lead
-                          </span>
+                          <span className="text-slate-400 italic">Não informado</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-on-surface-variant font-medium max-w-[180px] truncate">
+                        {contact.address ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="truncate" title={contact.address}>{contact.address}</span>
+                            {contact.latitude !== undefined && contact.longitude !== undefined && (
+                              <a
+                                href={`https://www.google.com/maps/search/?api=1&query=${contact.latitude},${contact.longitude}`}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="text-[9px] text-blue-600 hover:text-blue-850 hover:underline flex items-center gap-0.5 font-bold"
+                              >
+                                📍 Ver no mapa
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic">Não informado</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-on-surface-variant font-medium">{contact.lastContact}</td>
@@ -376,9 +411,9 @@ export default function ContactsTab({
                           <button
                             onClick={() => { setEditableContact(contact); setShowEditModal(true); }}
                             className="p-1 px-1.5 hover:bg-slate-100 hover:text-black rounded text-[11px] font-bold transition-all text-outline"
-                            title="Gerenciar links diretos e detalhes"
+                            title="Editar detalhes do contato"
                           >
-                            Imagem / Editar
+                            Editar
                           </button>
                         </div>
                       </td>
@@ -421,98 +456,16 @@ export default function ContactsTab({
         </div>
       </div>
 
-      {/* EDIT MODAL / DIRECT IMAGE LINK MANAGER */}
+      {/* EDIT MODAL */}
       {showEditModal && editableContact && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-xs animate-fadeIn">
           <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-900">Gerenciar Contato & Links de Imagens</h3>
+              <h3 className="text-base font-bold text-slate-900">Editar Contato</h3>
               <button onClick={() => { setShowEditModal(false); setEditableContact(null); }} className="text-slate-400 hover:text-black font-bold">✕</button>
             </div>
 
             <form onSubmit={handleUpdateContact} className="space-y-4">
-              <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
-                {editableContact.avatarUrl ? (
-                  <img
-                    src={editableContact.avatarUrl}
-                    alt={editableContact.name}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-slate-950 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                    JD
-                  </div>
-                )}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800">{editableContact.name}</h4>
-                  <p className="text-xs text-slate-500">{editableContact.company || "Sem Empresa"}</p>
-                  <p className="text-[10px] text-blue-600 font-bold mt-1 uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded-full inline-block">
-                    Imagem de perfil ativa
-                  </p>
-                </div>
-              </div>
-
-              {/* Direct links parameters section */}
-              <div className="space-y-2 p-3 bg-blue-50/50 border border-blue-100 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-blue-800 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">link</span>
-                    Link Direto da Imagem no HTML
-                  </span>
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(editableContact.avatarUrl || "");
-                        triggerCopyNotification("Link direto copiado para a área de transferência!");
-                      }}
-                      className="text-[10px] font-bold text-blue-700 bg-blue-100/70 hover:bg-blue-200 px-2 py-0.5 rounded cursor-pointer"
-                    >
-                      Copiar Link
-                    </button>
-                    {editableContact.avatarUrl && (
-                      <a
-                        href={editableContact.avatarUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-[10px] font-bold text-blue-700 bg-blue-100/70 hover:bg-blue-200 px-2 py-0.5 rounded inline-block cursor-pointer"
-                      >
-                        Visualizar noutra aba ↗
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                <p className="text-[10px] text-blue-900 leading-relaxed">
-                  Insira abaixo qualquer URL pública direta de arquivo de imagem (PNG, JPG, SVG, ou CDN como Google UserContent / Unsplash). O CRM interpretará as tags HTML para renderização nativa.
-                </p>
-
-                <input
-                  type="url"
-                  placeholder="Ex: https://picsum.photos/seed/alex/100"
-                  value={editableContact.avatarUrl || ""}
-                  onChange={(e) => setEditableContact({ ...editableContact, avatarUrl: e.target.value })}
-                  className="w-full bg-white border border-blue-200 px-3 py-1.5 rounded text-xs outline-none focus:ring-1 focus:ring-blue-600 text-slate-800"
-                />
-
-                {/* Preset selectors to simplify user experience */}
-                <div className="pt-2">
-                  <span className="text-[10px] font-bold text-slate-500 block mb-1">CDN Presets Rápidos de Fotos Corporativas:</span>
-                  <div className="flex flex-col gap-1">
-                    {AVATAR_PRESETS.map((preset, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setEditableContact({ ...editableContact, avatarUrl: preset.url })}
-                        className="text-[10px] text-left hover:text-blue-800 text-slate-600 bg-white p-1 px-2 border border-slate-100 hover:border-blue-200 rounded text-ellipsis overflow-hidden whitespace-nowrap cursor-pointer"
-                      >
-                        {preset.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
               {/* Standard text elements editing */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -537,50 +490,62 @@ export default function ContactsTab({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Empresa</label>
-                  <input
-                    type="text"
-                    required
-                    value={editableContact.company}
-                    onChange={(e) => setEditableContact({ ...editableContact, company: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Cargo Comercial</label>
-                  <input
-                    type="text"
-                    required
-                    value={editableContact.role}
-                    onChange={(e) => setEditableContact({ ...editableContact, role: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium"
-                  />
-                </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Telefone Principal</label>
+                <input
+                  type="text"
+                  value={editableContact.phone || ""}
+                  onChange={(e) => setEditableContact({ ...editableContact, phone: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Telefone Principal</label>
-                  <input
-                    type="text"
-                    value={editableContact.phone || ""}
-                    onChange={(e) => setEditableContact({ ...editableContact, phone: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Status de Relacionamento</label>
-                  <select
-                    value={editableContact.status}
-                    onChange={(e) => setEditableContact({ ...editableContact, status: e.target.value as any })}
-                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-bold"
+              {/* Data de Nascimento (Mês e Ano) - EDIT */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Data de Nascimento (Mês e Ano)</label>
+                <input
+                  type="month"
+                  value={editableContact.birthYear && editableContact.birthMonth ? `${editableContact.birthYear}-${editableContact.birthMonth}` : ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const [year, month] = val.split("-");
+                      setEditableContact({
+                        ...editableContact,
+                        birthYear: year,
+                        birthMonth: month,
+                      });
+                    } else {
+                      setEditableContact({
+                        ...editableContact,
+                        birthYear: undefined,
+                        birthMonth: undefined,
+                      });
+                    }
+                  }}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                />
+              </div>
+
+              {/* Endereço com Geolocalização Opcional - EDIT */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[11px] font-bold text-slate-550">Endereço</label>
+                  <button
+                    type="button"
+                    onClick={() => captureCurrentLocation(true)}
+                    className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded flex items-center gap-1 cursor-pointer font-bold border border-slate-200"
                   >
-                    <option value="Customer">Customer</option>
-                    <option value="Lead">Lead</option>
-                  </select>
+                    📍 Obter Localização Atual
+                  </button>
                 </div>
+                <input
+                  type="text"
+                  placeholder="Rua, Número, Bairro, Cidade..."
+                  value={editableContact.address || ""}
+                  onChange={(e) => setEditableContact({ ...editableContact, address: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800"
+                />
               </div>
 
               <div className="flex gap-2 justify-between border-t border-slate-100 pt-4 mt-6">
@@ -617,7 +582,7 @@ export default function ContactsTab({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-xs animate-fadeIn">
           <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg p-6">
             <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
-              <h3 className="text-base font-bold text-slate-900">Adicionar Novo Contato Executivo</h3>
+              <h3 className="text-base font-bold text-slate-900">Adicionar Novo</h3>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-black font-bold">✕</button>
             </div>
 
@@ -647,61 +612,56 @@ export default function ContactsTab({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Empresa</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Acme S/A"
-                    value={newCompany}
-                    onChange={(e) => setNewCompany(e.target.value)}
-                    className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Cargo Comercial</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Diretor de Compras"
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Telefone Principal</label>
-                  <input
-                    type="text"
-                    placeholder="+55 (11) 99999-9999"
-                    value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
-                    className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Status Inicial</label>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-bold"
-                  >
-                    <option value="Lead">Lead (Negociação)</option>
-                    <option value="Customer">Customer (Fechado)</option>
-                  </select>
-                </div>
-              </div>
-
               <div>
-                <label className="text-[11px] font-bold text-slate-500 block mb-1">URL Direta para Imagem de Perfil (Opcional)</label>
+                <label className="text-[11px] font-bold text-slate-500 block mb-1">Telefone Principal</label>
                 <input
-                  type="url"
-                  placeholder="Deixe em branco para usar placeholder de avatar do sistema"
-                  value={newAvatarUrl}
-                  onChange={(e) => setNewAvatarUrl(e.target.value)}
+                  type="text"
+                  placeholder="+55 (11) 99999-9999"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                />
+              </div>
+
+              {/* Data de Nascimento (Mês e Ano) */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 block mb-1">Data de Nascimento (Mês e Ano)</label>
+                <input
+                  type="month"
+                  value={newBirthYear && newBirthMonth ? `${newBirthYear}-${newBirthMonth}` : ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const [year, month] = val.split("-");
+                      setNewBirthYear(year);
+                      setNewBirthMonth(month);
+                    } else {
+                      setNewBirthYear("");
+                      setNewBirthMonth("");
+                    }
+                  }}
+                  className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                />
+              </div>
+
+              {/* Endereço com Geolocalização Opcional */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[11px] font-bold text-slate-500">Endereço</label>
+                  <button
+                    type="button"
+                    onClick={() => captureCurrentLocation(false)}
+                    disabled={isLocating}
+                    className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded flex items-center gap-1 cursor-pointer disabled:opacity-50 font-bold border border-slate-200"
+                  >
+                    📍 {isLocating ? "Obtendo GPS..." : "Capturar Localização Atual"}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Rua, Número, Bairro, Cidade..."
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
                   className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800"
                 />
               </div>
