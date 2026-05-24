@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Contact, Activity } from "@/lib/types";
+import { Search, Mail, Sparkles } from "lucide-react";
 
 interface ContactsTabProps {
   contacts: Contact[];
@@ -307,7 +308,7 @@ export default function ContactsTab({
       <div className="bg-white p-4 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-outline">search</span>
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-outline/70 pointer-events-none" />
             <input
               type="text"
               placeholder="Filtrar por nome..."
@@ -405,7 +406,7 @@ export default function ContactsTab({
                             className="p-1 px-1.5 bg-slate-100 hover:bg-slate-200 hover:text-blue-800 rounded text-[10px] font-bold transition-all text-on-surface-variant flex items-center gap-1 cursor-pointer"
                             title="Escrever email com IA de vendas"
                           >
-                            <span className="material-symbols-outlined text-xs">mail</span>
+                            <Mail className="w-3 h-3 text-slate-600" />
                             Pitch IA
                           </button>
                           <button
@@ -693,7 +694,7 @@ export default function ContactsTab({
             <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-slate-950 text-white flex items-center justify-center">
-                  <span className="material-symbols-outlined text-xs">ambient_lighting</span>
+                  <Sparkles className="w-4 h-4 text-amber-300" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Roteiro de E-mail Inteligente Gemini</h3>
