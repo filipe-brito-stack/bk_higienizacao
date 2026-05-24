@@ -18,13 +18,13 @@ export interface Contact {
 
 export interface Deal {
   id: string;
-  title: string;
-  company: string;
-  value: number;
-  stage: "Lead" | "Contacted" | "Proposal" | "Negotiation" | "Won" | "Lost";
-  probability: number; // e.g., 85 for 85%
+  clientName: string; // Autocomplete do cliente
+  serviceDescription: string; // Descrição do serviço
+  value: number; // Valor recebido/cobrado
+  cost: number; // Valor gasto para realizar o serviço (custo)
+  stage: "Proposta" | "Agendado" | "Realizado";
+  date: string; // Data da oportunidade/serviço preenchida por padrão
   owner: string;
-  closeDate: string;
 }
 
 export interface Task {

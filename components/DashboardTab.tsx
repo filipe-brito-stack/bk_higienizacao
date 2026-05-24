@@ -60,11 +60,11 @@ export default function DashboardTab({
 
   // Dynamic calculations
   const totalRevenue = deals
-    .filter((d) => d.stage === "Won")
+    .filter((d) => d.stage === "Realizado")
     .reduce((sum, d) => sum + d.value, 0);
 
   const activeDealsCount = deals.filter(
-    (d) => d.stage !== "Won" && d.stage !== "Lost"
+    (d) => d.stage !== "Realizado"
   ).length;
 
   const urgentTasksCount = tasks.filter((t) => !t.completed && t.priority === "Urgent").length;
@@ -146,7 +146,7 @@ export default function DashboardTab({
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Sales Overview</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Dashboard</h1>
           <p className="text-sm text-on-surface-variant mt-1">Bem-vindo de volta, Bruno. Aqui está o desempenho do seu pipeline hoje.</p>
         </div>
         <div className="flex items-center gap-2 self-start md:self-auto">
@@ -158,11 +158,6 @@ export default function DashboardTab({
             <Sparkles className="w-4 h-4 text-amber-400" />
             Analisar com IA Gemini
           </button>
-          <div className="flex gap-1 bg-surface-container-low p-1 rounded-lg border border-outline-variant/35">
-            <button className="px-3 py-1 bg-white text-on-surface font-semibold text-xs rounded shadow-sm">MTD</button>
-            <button className="px-3 py-1 text-on-surface-variant font-medium text-xs hover:bg-surface-container-high rounded transition-colors">QTD</button>
-            <button className="px-3 py-1 text-on-surface-variant font-medium text-xs hover:bg-surface-container-high rounded transition-colors">YTD</button>
-          </div>
         </div>
       </div>
 
@@ -183,7 +178,7 @@ export default function DashboardTab({
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
             ${totalRevenue.toLocaleString("pt-BR")}
           </h2>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
         </div>
 
         {/* Conversion Rate */}
@@ -452,7 +447,7 @@ export default function DashboardTab({
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-base font-bold text-on-surface">Histórico de Atividades</h3>
-              <p className="text-xs text-on-surface-variant">Log de atualizações de vendas em tempo real.</p>
+              <p className="text-xs text-on-surface-variant">Log de atualizações em tempo real.</p>
             </div>
             <span className="text-[10px] text-outline font-semibold uppercase tracking-wider">Histórico</span>
           </div>

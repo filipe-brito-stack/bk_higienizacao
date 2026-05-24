@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Contact, Activity } from "@/lib/types";
-import { Search, Mail, Sparkles } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface ContactsTabProps {
   contacts: Contact[];
@@ -85,12 +85,7 @@ export default function ContactsTab({
     }
   };
 
-  // Gemini AI Draft States
-  const [aiDraftLoading, setAiDraftLoading] = useState(false);
-  const [generatedDraft, setGeneratedDraft] = useState<{ subject: string; body: string } | null>(null);
-  const [draftTone, setDraftTone] = useState("Professional yet Warm");
-  const [activeDraftContact, setActiveDraftContact] = useState<Contact | null>(null);
-  const [isOpenDraftModal, setIsOpenDraftModal] = useState(false);
+
 
   // Predefined professional avatar CDN presets
   const AVATAR_PRESETS = [
@@ -280,41 +275,7 @@ export default function ContactsTab({
     }
   };
 
-  // Gemini Email generator trigger
-  const handleOpenEmailDrafter = (contact: Contact) => {
-    setActiveDraftContact(contact);
-    setGeneratedDraft(null);
-    setIsOpenDraftModal(true);
-  };
 
-  const executeDraftEmail = async () => {
-    if (!activeDraftContact) return;
-    setAiDraftLoading(true);
-    try {
-      const response = await fetch("/api/gemini/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contact: activeDraftContact,
-          tone: draftTone,
-          senderName: "Alex (Nexus CRM)",
-        }),
-      });
-      const data = await response.json();
-      if (data.success && data.email) {
-        setGeneratedDraft(data.email);
-      } else {
-        throw new Error(data.error || "Gemini service draft error.");
-      }
-    } catch (err) {
-      setGeneratedDraft({
-        subject: `Follow-up comercial: Nexus CRM & ${activeDraftContact.company}`,
-        body: `Prezado(a) ${activeDraftContact.name},\n\nGostaria de retomar nosso contato anterior para entender como estão as etapas operacionais em relação aos briefings definidos para a ${activeDraftContact.company}.\n\nComo ${activeDraftContact.role}, acreditamos que sua visão técnica agregaria enorme eficiência no alinhamento do projeto Nexus.\n\nFico no aguardo de uma breve confirmação para agendarmos 10 minutos na próxima terça.\n\nCordialmente,\nAlex\nNexus CRM Director`,
-      });
-    } finally {
-      setAiDraftLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -326,7 +287,7 @@ export default function ContactsTab({
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-primary hover:bg-slate-900 text-on-primary rounded-lg text-xs font-bold transition-all active:scale-95 self-start sm:self-auto cursor-pointer"
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all active:scale-95 self-start sm:self-auto shadow-md hover:shadow-lg cursor-pointer"
         >
           Adicionar Contato
         </button>
@@ -387,8 +348,7 @@ export default function ContactsTab({
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 border-b border-outline-variant/40 text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">
               <tr>
-                <th className="px-6 py-4 w-12">Id</th>
-                <th className="px-6 py-4">Nome completo / Email</th>
+                <th className="px-6 py-4">Nome / Email</th>
                 <th className="px-6 py-4">Aniversário</th>
                 <th className="px-6 py-4">Endereço / Localização</th>
                 <th className="px-6 py-4">Último contato</th>
@@ -398,7 +358,7 @@ export default function ContactsTab({
             <tbody className="divide-y divide-outline-variant/20 text-xs">
               {paginatedContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-16 text-outline italic">
+                  <td colSpan={5} className="text-center py-16 text-outline italic">
                     Nenhum contato coincide com os filtros configurados.
                   </td>
                 </tr>
@@ -413,7 +373,6 @@ export default function ContactsTab({
 
                   return (
                      <tr key={contact.id} className="hover:bg-slate-50/70 transition-colors group">
-                      <td className="px-6 py-4 text-outline font-medium">#{startIndex + index + 1}</td>
                       <td className="px-6 py-4">
                         <div>
                           <span className="font-bold text-on-surface block hover:underline cursor-pointer" onClick={() => handleOpenEditModal(contact)}>
@@ -451,16 +410,7 @@ export default function ContactsTab({
                       <td className="px-6 py-4 text-on-surface-variant font-medium">{contact.lastContact}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                          {/* AI Email draft button */}
-                          <button
-                            onClick={() => handleOpenEmailDrafter(contact)}
-                            className="p-1 px-1.5 bg-slate-100 hover:bg-slate-200 hover:text-blue-800 rounded text-[10px] font-bold transition-all text-on-surface-variant flex items-center gap-1 cursor-pointer"
-                            title="Escrever email com IA de vendas"
-                          >
-                            <Mail className="w-3 h-3 text-slate-600" />
-                            Pitch IA
-                          </button>
-                          <button
+                           <button
                             onClick={() => handleOpenEditModal(contact)}
                             className="p-1 px-1.5 hover:bg-slate-100 hover:text-black rounded text-[11px] font-bold transition-all text-outline"
                             title="Editar detalhes do contato"
@@ -628,7 +578,7 @@ export default function ContactsTab({
             <form onSubmit={handleAddContact} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Nome Completo</label>
+                  <label className="text-[11px] font-bold text-slate-500 block mb-1">Nome</label>
                   <input
                     type="text"
                     required
@@ -718,111 +668,7 @@ export default function ContactsTab({
         </div>
       )}
 
-      {/* GEMINI PITCH/EMAIL GENERATOR MODAL */}
-      {isOpenDraftModal && activeDraftContact && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-xl p-6">
-            <div className="flex justify-between items-start mb-4 border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-slate-950 text-white flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-amber-300" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Roteiro de E-mail Inteligente Gemini</h3>
-                  <p className="text-[10px] text-slate-500">Desenvolva pitches e follow-ups gerados de acordo com os atributos de {activeDraftContact.name}.</p>
-                </div>
-              </div>
-              <button
-                onClick={() => { setIsOpenDraftModal(false); setActiveDraftContact(null); setGeneratedDraft(null); }}
-                className="text-slate-400 hover:text-black font-bold"
-              >
-                ✕
-              </button>
-            </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-150 text-xs">
-                <div>
-                  <span className="text-outline text-[10px] block font-bold uppercase tracking-wider">Destinatário</span>
-                  <span className="font-bold text-slate-800">{activeDraftContact.name} ({activeDraftContact.company})</span>
-                </div>
-                <div>
-                  <span className="text-outline text-[10px] block font-bold uppercase tracking-wider">Cargo/Status</span>
-                  <span className="font-semibold text-slate-700">{activeDraftContact.role} • {activeDraftContact.status}</span>
-                </div>
-              </div>
-
-              {/* Configure Tone selection */}
-              <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-150">
-                <span className="text-xs font-bold text-slate-700">Tom da Conversa:</span>
-                <select
-                  value={draftTone}
-                  onChange={(e) => setDraftTone(e.target.value)}
-                  className="bg-white border border-slate-200 text-xs text-slate-800 px-3 py-1 rounded font-semibold outline-none"
-                >
-                  <option value="Professional yet Warm">Profissional e Caloroso (Ideal)</option>
-                  <option value="Direct and Corporate">Direto e Corporativo</option>
-                  <option value="Very Formal Enterprise">Formal Executivo (Enterprise)</option>
-                  <option value="Urgent commercial pitch">Urgente / Gatilho Mental</option>
-                </select>
-              </div>
-
-              {generatedDraft ? (
-                <div className="space-y-3 animate-fadeIn">
-                  <div className="p-3 bg-blue-50/40 rounded-lg border border-blue-100 text-xs">
-                    <span className="text-[10px] font-bold text-blue-800 uppercase block mb-1">Linha de Assunto:</span>
-                    <p className="font-bold text-slate-900">{generatedDraft.subject}</p>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg max-h-60 overflow-y-auto text-xs text-slate-800 font-medium leading-relaxed whitespace-pre-wrap">
-                    {generatedDraft.body}
-                  </div>
-
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => {
-                        const fullEmailCopy = `Assunto: ${generatedDraft.subject}\n\n${generatedDraft.body}`;
-                        navigator.clipboard.writeText(fullEmailCopy);
-                        triggerCopyNotification("Copiado com sucesso para a área de transferência!");
-                      }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
-                    >
-                      Copiar Conteúdo
-                    </button>
-                    <button
-                      onClick={() => setGeneratedDraft(null)}
-                      className="px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      Refazer Ajustes
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="py-8 text-center bg-slate-50 border border-dashed border-slate-200 rounded-lg">
-                  {aiDraftLoading ? (
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="w-8 h-8 border-2 border-slate-100 border-t-slate-800 rounded-full animate-spin"></div>
-                      <span className="text-xs text-slate-600 font-semibold mt-1">Sintonizando com Gemini no Servidor...</span>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-xs text-slate-600 mb-4 max-w-sm mx-auto leading-relaxed">
-                        Gerar um pitch personalizado com o Gemini consome o histórico comercial sincronizado para preencher as variáveis do HTML corporativo.
-                      </p>
-                      <button
-                        onClick={executeDraftEmail}
-                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95 cursor-pointer"
-                      >
-                        Gerar Email Preditivo
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

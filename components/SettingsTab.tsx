@@ -54,7 +54,7 @@ export default function SettingsTab({
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Configurações Gerais</h1>
-        <p className="text-sm text-on-surface-variant mt-1">Sincronize variáveis globais de performance e modifique perfis com facilidade.</p>
+        <p className="text-sm text-on-surface-variant mt-1">Sincronize variáveis globais e modifique perfis com facilidade.</p>
       </div>
 
       {isSaved && (

@@ -7,8 +7,6 @@ import {
   KanbanSquare, 
   Users, 
   Handshake, 
-  TrendingUp, 
-  HelpCircle, 
   Settings, 
   Search, 
   Plus, 
@@ -23,9 +21,7 @@ import DashboardTab from "@/components/DashboardTab";
 import ContactsTab from "@/components/ContactsTab";
 import PipelineTab from "@/components/PipelineTab";
 import DealsTab from "@/components/DealsTab";
-import AnalyticsTab from "@/components/AnalyticsTab";
 import SettingsTab from "@/components/SettingsTab";
-import SupportTab from "@/components/SupportTab";
 
 const INITIAL_CONTACTS: Contact[] = [
   {
@@ -93,83 +89,83 @@ const INITIAL_CONTACTS: Contact[] = [
 const INITIAL_DEALS: Deal[] = [
   {
     id: "d1",
-    title: "Cloud Migration",
-    company: "TechFlow Inc.",
-    value: 120000,
-    stage: "Proposal",
-    probability: 60,
-    owner: "Alex",
-    closeDate: "2026-06-30"
+    clientName: "Jane Doe",
+    serviceDescription: "Higienização Completa de Sofá de Canto",
+    value: 450,
+    cost: 80,
+    stage: "Proposta",
+    date: "2026-05-24",
+    owner: "Alex"
   },
   {
     id: "d2",
-    title: "Project Aurora",
-    company: "Acme Corp",
-    value: 42000,
-    stage: "Won",
-    probability: 100,
-    owner: "Sarah Miller",
-    closeDate: "2026-05-23"
+    clientName: "Robert King",
+    serviceDescription: "Impermeabilização de Estofados",
+    value: 600,
+    cost: 150,
+    stage: "Realizado",
+    date: "2026-05-23",
+    owner: "Sarah Miller"
   },
   {
     id: "d3",
-    title: "Enterprise ERP Proposal",
-    company: "Global Logistics Ltd",
-    value: 240000,
-    stage: "Proposal",
-    probability: 70,
-    owner: "Alex",
-    closeDate: "2026-07-15"
+    clientName: "Michael Wood",
+    serviceDescription: "Lavagem e Secagem de Tapetes Persas",
+    value: 1200,
+    cost: 300,
+    stage: "Proposta",
+    date: "2026-05-24",
+    owner: "Alex"
   },
   {
     id: "d4",
-    title: "Security Patch Optimization",
-    company: "Cyberdyne Systems",
-    value: 85000,
-    stage: "Negotiation",
-    probability: 80,
-    owner: "Alex",
-    closeDate: "2026-06-15"
+    clientName: "Sarah Hughes",
+    serviceDescription: "Higienização Automotiva e Polimento",
+    value: 850,
+    cost: 180,
+    stage: "Agendado",
+    date: "2026-05-24",
+    owner: "Alex"
   },
   {
     id: "d5",
-    title: "Marketing Campaign Lead",
-    company: "Spark Labs",
-    value: 15000,
-    stage: "Lead",
-    probability: 20,
-    owner: "Alex",
-    closeDate: "2026-08-01"
+    clientName: "Emily Lewis",
+    serviceDescription: "Limpeza de Colchão Casal King",
+    value: 350,
+    cost: 50,
+    stage: "Proposta",
+    date: "2026-05-24",
+    owner: "Alex"
   },
   {
     id: "d6",
-    title: "FinCloud Ledger Expansion",
-    company: "FinCloud",
-    value: 467500,
-    stage: "Won",
-    probability: 100,
-    owner: "Sarah Miller",
-    closeDate: "2026-05-20"
+    clientName: "Robert King",
+    serviceDescription: "Higienização de Poltronas e Cadeiras",
+    value: 950,
+    cost: 160,
+    stage: "Realizado",
+    date: "2026-05-20",
+    owner: "Sarah Miller"
   },
   {
     id: "d7",
-    title: "Nexus Design System Onboarding",
-    company: "Nexus Design",
-    value: 250000,
-    stage: "Won",
-    probability: 100,
-    owner: "Alex",
-    closeDate: "2026-05-10"
+    clientName: "Emily Lewis",
+    serviceDescription: "Limpeza de Cortinas e Persianas",
+    value: 700,
+    cost: 120,
+    stage: "Realizado",
+    date: "2026-05-10",
+    owner: "Alex"
   },
   {
     id: "d8",
-    title: "Zenith Support Retainer",
-    company: "Zenith Corp",
-    value: 525000,
-    stage: "Won",
-    probability: 100,
-    owner: "Alex",
-    closeDate: "2026-05-02"
+    clientName: "Jane Doe",
+    serviceDescription: "Higienização Pós-Obra Residencial",
+    value: 2500,
+    cost: 650,
+    stage: "Realizado",
+    date: "2026-05-02",
+    owner: "Alex"
   }
 ];
 
@@ -177,7 +173,7 @@ const INITIAL_TASKS: Task[] = [
   {
     id: "t1",
     title: "Follow up with TechFlow Inc.",
-    associatedWith: "Deal: Cloud Migration (Stage: Proposal)",
+    associatedWith: "Deal: Higienização Completa (Stage: Proposta)",
     completed: false,
     priority: "Urgent",
     dueDate: "Today"
@@ -250,7 +246,7 @@ const INITIAL_GOALS: CRMGoals = {
 export default function RootPage() {
   // Navigation
   const [currentTab, setCurrentTab] = useState<
-    "dashboard" | "pipeline" | "contacts" | "deals" | "analytics" | "settings" | "support"
+    "dashboard" | "pipeline" | "contacts" | "deals" | "settings"
   >("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -283,28 +279,95 @@ export default function RootPage() {
       /* eslint-disable react-hooks/set-state-in-effect */
       try {
         const cachedContacts = localStorage.getItem("nexus_contacts");
-        if (cachedContacts) setContacts(JSON.parse(cachedContacts));
+        if (cachedContacts) {
+          const parsed = JSON.parse(cachedContacts);
+          if (Array.isArray(parsed)) {
+            const seenContacts = new Set<string>();
+            const filtered = parsed.filter((c: any) => {
+              if (!c || !c.id) return false;
+              if (seenContacts.has(c.id)) return false;
+              seenContacts.add(c.id);
+              return true;
+            });
+            setContacts(filtered);
+          }
+        }
       } catch (e) {
         console.error("Error loading cached contacts", e);
       }
 
       try {
         const cachedDeals = localStorage.getItem("nexus_deals");
-        if (cachedDeals) setDeals(JSON.parse(cachedDeals));
+        if (cachedDeals) {
+          const parsed = JSON.parse(cachedDeals);
+          if (Array.isArray(parsed)) {
+            const seenDeals = new Set<string>();
+            const migrated = parsed
+              .map((d: any) => {
+                const clientName = d.clientName || d.company || "Cliente Desconhecido";
+                const serviceDescription = d.serviceDescription || d.title || "Serviço sem descrição";
+                const cost = d.cost !== undefined ? d.cost : Math.round((d.value || 0) * 0.2);
+                const value = d.value !== undefined ? d.value : 0;
+                const stage = (["Proposta", "Agendado", "Realizado"].includes(d.stage)) ? d.stage : "Proposta";
+                const date = d.date || d.closeDate || "2026-05-24";
+                return {
+                  id: d.id,
+                  clientName,
+                  serviceDescription,
+                  value,
+                  cost,
+                  stage,
+                  date,
+                  owner: d.owner || "Alex"
+                };
+              })
+              .filter((d) => {
+                if (!d.id) return false;
+                if (seenDeals.has(d.id)) return false;
+                seenDeals.add(d.id);
+                return true;
+              });
+            setDeals(migrated);
+          }
+        }
       } catch (e) {
         console.error("Error loading cached deals", e);
       }
 
       try {
         const cachedTasks = localStorage.getItem("nexus_tasks");
-        if (cachedTasks) setTasks(JSON.parse(cachedTasks));
+        if (cachedTasks) {
+          const parsed = JSON.parse(cachedTasks);
+          if (Array.isArray(parsed)) {
+            const seenTasks = new Set<string>();
+            const filtered = parsed.filter((t: any) => {
+              if (!t || !t.id) return false;
+              if (seenTasks.has(t.id)) return false;
+              seenTasks.add(t.id);
+              return true;
+            });
+            setTasks(filtered);
+          }
+        }
       } catch (e) {
         console.error("Error loading cached tasks", e);
       }
 
       try {
         const cachedActivities = localStorage.getItem("nexus_activities");
-        if (cachedActivities) setActivities(JSON.parse(cachedActivities));
+        if (cachedActivities) {
+          const parsed = JSON.parse(cachedActivities);
+          if (Array.isArray(parsed)) {
+            const seenActivities = new Set<string>();
+            const filtered = parsed.filter((a: any) => {
+              if (!a || !a.id) return false;
+              if (seenActivities.has(a.id)) return false;
+              seenActivities.add(a.id);
+              return true;
+            });
+            setActivities(filtered);
+          }
+        }
       } catch (e) {
         console.error("Error loading cached activities", e);
       }
@@ -401,7 +464,7 @@ export default function RootPage() {
             </div>
             <div>
               <span className="font-extrabold text-[18px] text-black tracking-tight leading-tight block">BK Higienização</span>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Gestão de Vendas</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Gestão & Workflow</span>
             </div>
           </div>
           <button 
@@ -442,7 +505,7 @@ export default function RootPage() {
             } cursor-pointer`}
           >
             <KanbanSquare className="w-4 h-4" />
-            <span>Vendas</span>
+            <span>Workflow</span>
           </button>
 
           {/* Contacts action link */}
@@ -476,41 +539,10 @@ export default function RootPage() {
             <Handshake className="w-4 h-4" />
             <span>Serviços</span>
           </button>
-
-          {/* Analytics link */}
-          <button
-            onClick={() => {
-              setCurrentTab("analytics");
-              setSidebarOpen(false);
-            }}
-            className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
-              currentTab === "analytics"
-                ? "bg-[#d3e4fe] text-[#0b1c30]"
-                : "text-slate-600 hover:bg-[#f2f4f6]"
-            } cursor-pointer`}
-          >
-            <TrendingUp className="w-4 h-4" />
-            <span>Performance</span>
-          </button>
         </nav>
 
-        {/* Support and Settings fixed section */}
+        {/* Settings fixed section */}
         <div className="border-t border-[#eceef0] pt-4 mt-auto flex flex-col gap-1">
-          <button
-            onClick={() => {
-              setCurrentTab("support");
-              setSidebarOpen(false);
-            }}
-            className={`flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold transition-all ${
-              currentTab === "support"
-                ? "bg-[#d3e4fe] text-[#0b1c30]"
-                : "text-slate-600 hover:bg-[#f2f4f6]"
-            } cursor-pointer`}
-          >
-            <HelpCircle className="w-4 h-4" />
-            <span>Suporte</span>
-          </button>
-
           <button
             onClick={() => {
               setCurrentTab("settings");
@@ -603,12 +635,6 @@ export default function RootPage() {
                 </div>
               )}
 
-              <button
-                onClick={() => setCurrentTab("support")}
-                className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-full text-slate-500 transition-colors cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-sm font-semibold">help_outline</span>
-              </button>
             </div>
 
             {/* Active profile card */}
@@ -659,6 +685,7 @@ export default function RootPage() {
               deals={deals}
               setDeals={setDeals}
               setActivities={setActivities}
+              contacts={contacts}
             />
           )}
 
@@ -666,12 +693,6 @@ export default function RootPage() {
             <DealsTab
               deals={deals}
               setDeals={setDeals}
-            />
-          )}
-
-          {currentTab === "analytics" && (
-            <AnalyticsTab
-              deals={deals}
             />
           )}
 
@@ -684,10 +705,6 @@ export default function RootPage() {
               profilePic={profilePic}
               setProfilePic={setProfilePic}
             />
-          )}
-
-          {currentTab === "support" && (
-            <SupportTab />
           )}
         </main>
       </div>

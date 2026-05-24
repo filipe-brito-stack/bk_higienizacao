@@ -1,24 +1,55 @@
 'use client';
 
 import React, { useState } from "react";
-import { Deal, Activity } from "@/lib/types";
+import { Deal, Activity, Contact } from "@/lib/types";
 
 interface PipelineTabProps {
   deals: Deal[];
   setDeals: React.Dispatch<React.SetStateAction<Deal[]>>;
   setActivities: React.Dispatch<React.SetStateAction<Activity[]>>;
+  contacts?: Contact[];
 }
 
-const STAGES: Deal["stage"][] = ["Lead", "Contacted", "Proposal", "Negotiation", "Won", "Lost"];
+const STAGES: Deal["stage"][] = ["Proposta", "Agendado", "Realizado"];
 
-export default function PipelineTab({ deals, setDeals, setActivities }: PipelineTabProps) {
+// Module-level helpers to generate identifiers.
+// Keeping these outside of the React component prevents ESLint purity/render complaints.
+function generateDealId(clientName: string, count: number): string {
+  const sanitizedName = clientName.trim().replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+  const timestamp = Date.now();
+  const rand = Math.random().toString(36).substring(2, 7);
+  return `deal_${count + 1}_${sanitizedName}_${timestamp}_${rand}`;
+}
+
+function generateActivityId(dealId: string, action: string): string {
+  const timestamp = Date.now();
+  const rand = Math.random().toString(36).substring(2, 7);
+  return `act_${action}_${dealId}_${timestamp}_${rand}`;
+}
+
+export default function PipelineTab({ deals, setDeals, setActivities, contacts = [] }: PipelineTabProps) {
   const [showAddDeal, setShowAddDeal] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newCompany, setNewCompany] = useState("");
+  
+  // Custom form states
+  const [clientSearch, setClientSearch] = useState("");
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+  const [newDescription, setNewDescription] = useState("");
+  const [newDate, setNewDate] = useState(() => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  });
   const [newValueStr, setNewValueStr] = useState("");
-  const [newStage, setNewStage] = useState<Deal["stage"]>("Lead");
-  const [newProbability, setNewProbability] = useState(50);
+  const [newCostStr, setNewCostStr] = useState("");
+  const [newStage, setNewStage] = useState<Deal["stage"]>("Proposta");
   const [newOwner, setNewOwner] = useState("Alex");
+
+  // Filter client suggestions for autocomplete list
+  const filteredContacts = (contacts || []).filter((c) =>
+    c.name.toLowerCase().includes(clientSearch.toLowerCase())
+  );
 
   // Calculations of capital sums per stage
   const getStageTotal = (stage: Deal["stage"]) => {
@@ -40,22 +71,20 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
     const updatedStage = STAGES[nextIndex];
     if (updatedStage === deal.stage) return;
 
-    const updatedProbability = updatedStage === "Won" ? 100 : updatedStage === "Lost" ? 0 : deal.probability;
-
     // 1. Update Deals
     setDeals((prev: Deal[]) =>
       prev.map((d) =>
         d.id === dealId
-          ? { ...d, stage: updatedStage, probability: updatedProbability }
+          ? { ...d, stage: updatedStage }
           : d
       )
     );
 
     // 2. Add activity log
     const newActivity: Activity = {
-      id: "act_move_" + dealId + "_" + updatedStage,
-      type: updatedStage === "Won" ? "closed" : "contact",
-      title: `Deal staged: ${deal.title}`,
+      id: generateActivityId(dealId, `move_${updatedStage}`),
+      type: updatedStage === "Realizado" ? "closed" : "contact",
+      title: `Estágio alterado: ${deal.serviceDescription}`,
       sub: `Progresso: ${deal.stage} → <b>${updatedStage}</b> ($${deal.value.toLocaleString("pt-BR")})`,
       time: "Just now",
     };
@@ -66,49 +95,59 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
   const handleCreateDeal = (e: React.FormEvent) => {
     e.preventDefault();
     const valueNum = parseFloat(newValueStr.replace(/[^0-9.]/g, "")) || 0;
-    if (!newTitle.trim() || !newCompany.trim() || valueNum <= 0) return;
+    const costNum = parseFloat(newCostStr.replace(/[^0-9.]/g, "")) || 0;
+    if (!clientSearch.trim() || !newDescription.trim() || valueNum < 0) return;
 
-    const createdId = "deal_" + Date.now();
+    const createdId = generateDealId(clientSearch, deals.length);
     const createdDeal: Deal = {
       id: createdId,
-      title: newTitle,
-      company: newCompany,
+      clientName: clientSearch.trim(),
+      serviceDescription: newDescription.trim(),
       value: valueNum,
+      cost: costNum,
       stage: newStage,
-      probability: newStage === "Won" ? 100 : newStage === "Lost" ? 0 : newProbability,
+      date: newDate,
       owner: newOwner,
-      closeDate: "2026-06-30",
     };
 
     setDeals((prev: Deal[]) => [createdDeal, ...prev]);
 
     // Log Activity
     const newActivity: Activity = {
-      id: "act_add_" + createdId,
+      id: generateActivityId(createdId, "add"),
       type: "contact",
-      title: `Opportunity Added: ${createdDeal.title}`,
-      sub: `Sincronizado estágio <b>${createdDeal.stage}</b> com valor de $${createdDeal.value.toLocaleString("pt-BR")}`,
+      title: `Serviço cadastrado: ${createdDeal.serviceDescription}`,
+      sub: `Cliente: ${createdDeal.clientName} | Estágio: ${createdDeal.stage} | Valor: $${createdDeal.value.toLocaleString("pt-BR")}`,
       time: "Just now",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
 
     // Cleanup
-    setNewTitle("");
-    setNewCompany("");
+    setClientSearch("");
+    setNewDescription("");
     setNewValueStr("");
-    setNewStage("Lead");
-    setNewProbability(50);
+    setNewCostStr("");
+    setSelectedDefaultDate();
+    setNewStage("Proposta");
     setShowAddDeal(false);
   };
 
+  const setSelectedDefaultDate = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    setNewDate(`${yyyy}-${mm}-${dd}`);
+  };
+
   // Delete option from pipeline
-  const handleDeleteDeal = (id: string, title: string) => {
+  const handleDeleteDeal = (id: string, description: string) => {
     setDeals((prev: Deal[]) => prev.filter((d: Deal) => d.id !== id));
     const newActivity: Activity = {
-      id: "act_delete_" + id,
+      id: generateActivityId(id, "delete"),
       type: "contact",
-      title: `Deal deleted: ${title}`,
-      sub: `Opportunity removed from CRM pipeline`,
+      title: `Deal excluído: ${description}`,
+      sub: `Serviço removido do fluxo de trabalho.`,
       time: "Just now",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
@@ -119,19 +158,22 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
       {/* Top Header info */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Funil de Vendas</h1>
-          <p className="text-sm text-on-surface-variant mt-1">Sintonize os estágios das suas oportunidades de faturamento com controle completo.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Workflow</h1>
+          <p className="text-sm text-on-surface-variant mt-1">Sintonize os estágios das suas oportunidades e processos com controle completo.</p>
         </div>
         <button
-          onClick={() => setShowAddDeal(true)}
+          onClick={() => {
+            setSelectedDefaultDate();
+            setShowAddDeal(true);
+          }}
           className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition-all active:scale-95 cursor-pointer"
         >
-          Add Deal
+          Novo Serviço (Deal)
         </button>
       </div>
 
       {/* Kanban Stages Grid viewport */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4 overflow-x-auto pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-4">
         {STAGES.map((stage) => {
           const stageDeals = deals.filter((d) => d.stage === stage);
           const totalSum = getStageTotal(stage);
@@ -139,11 +181,9 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
           // Customize colors for headers representing progression
           let headerColor = "border-t-slate-300";
           let badgeColor = "bg-slate-100 text-slate-800";
-          if (stage === "Lead") { headerColor = "border-t-sky-400"; badgeColor = "bg-sky-50 text-sky-700"; }
-          if (stage === "Proposal") { headerColor = "border-t-amber-400"; badgeColor = "bg-amber-50 text-amber-700"; }
-          if (stage === "Negotiation") { headerColor = "border-t-indigo-500"; badgeColor = "bg-indigo-50 text-indigo-700"; }
-          if (stage === "Won") { headerColor = "border-t-emerald-500"; badgeColor = "bg-emerald-50 text-emerald-700 font-bold"; }
-          if (stage === "Lost") { headerColor = "border-t-rose-300"; badgeColor = "bg-rose-50 text-rose-700"; }
+          if (stage === "Proposta") { headerColor = "border-t-amber-400"; badgeColor = "bg-amber-50 text-amber-700"; }
+          if (stage === "Agendado") { headerColor = "border-t-indigo-500"; badgeColor = "bg-indigo-50 text-indigo-700"; }
+          if (stage === "Realizado") { headerColor = "border-t-emerald-500"; badgeColor = "bg-emerald-50 text-emerald-700 font-bold"; }
 
           return (
             <div key={stage} className={`bg-slate-50 border-t-4 ${headerColor} rounded-lg p-3 min-w-[220px] shadow-xs flex flex-col justify-between min-h-[450px]`}>
@@ -165,20 +205,34 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
                   {stageDeals.map((deal) => (
                     <div key={deal.id} className="bg-white p-3 rounded-lg border border-outline-variant/35 shadow-xs hover:border-slate-800 transition-colors animate-fadeIn group">
                       <div className="flex justify-between items-start gap-1">
-                        <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">{deal.company}</span>
+                        <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">{deal.clientName}</span>
                         <button
-                          onClick={() => handleDeleteDeal(deal.id, deal.title)}
+                          onClick={() => handleDeleteDeal(deal.id, deal.serviceDescription)}
                           className="opacity-0 group-hover:opacity-100 text-[10px] text-rose-600 font-bold hover:underline"
                         >
                           ✕
                         </button>
                       </div>
-                      <p className="text-xs font-bold text-slate-800 leading-tight mt-0.5">{deal.title}</p>
+                      <p className="text-xs font-bold text-slate-800 leading-tight mt-0.5">{deal.serviceDescription}</p>
                       
-                      <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-105">
-                        <span className="text-[11px] font-extrabold text-slate-700">${deal.value.toLocaleString("pt-BR")}</span>
-                        <div className="text-[9px] bg-slate-50 text-slate-500 px-1.5 rounded font-bold border">
-                          {deal.probability}%
+                      <div className="mt-3 pt-2 border-t border-slate-100 flex flex-col gap-1 text-[11px]">
+                        <div className="flex justify-between font-medium">
+                          <span className="text-slate-500">Valor Cobrado:</span>
+                          <span className="font-extrabold text-emerald-700">${deal.value.toLocaleString("pt-BR")}</span>
+                        </div>
+                        <div className="flex justify-between font-medium">
+                          <span className="text-slate-500">Gasto p/ Realizar:</span>
+                          <span className="font-semibold text-rose-600">${deal.cost.toLocaleString("pt-BR")}</span>
+                        </div>
+                        <div className="flex justify-between font-medium border-t border-dotted border-slate-200 pt-1">
+                          <span className="text-slate-500">Saldo Líquido:</span>
+                          <span className={`font-extrabold ${(deal.value - deal.cost) >= 0 ? "text-slate-800" : "text-rose-700"}`}>
+                            ${(deal.value - deal.cost).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-[9px] text-slate-400 mt-1">
+                          <span>Data do serviço:</span>
+                          <span className="font-semibold">{deal.date}</span>
                         </div>
                       </div>
 
@@ -186,7 +240,7 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
                       <div className="flex justify-between items-center mt-3 pt-1 border-t border-dotted border-slate-200 bg-slate-50 px-1 py-0.5 rounded">
                         <button
                           onClick={() => handleMoveStage(deal.id, "prev")}
-                          disabled={stage === "Lead"}
+                          disabled={stage === "Proposta"}
                           className="text-xs font-bold hover:text-blue-600 disabled:opacity-20 cursor-pointer p-0.5"
                           title="Voltar estágio"
                         >
@@ -195,7 +249,7 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
                         <span className="text-[8px] uppercase tracking-wider text-outline font-semibold">Staging</span>
                         <button
                           onClick={() => handleMoveStage(deal.id, "next")}
-                          disabled={stage === "Lost"}
+                          disabled={stage === "Realizado"}
                           className="text-xs font-bold hover:text-blue-600 disabled:opacity-20 cursor-pointer p-0.5"
                           title="Avançar estágio"
                         >
@@ -205,7 +259,7 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
                     </div>
                   ))}
                   {stageDeals.length === 0 && (
-                    <p className="text-[10px] text-outline text-center py-8 italic">Sem deals ativos.</p>
+                    <p className="text-[10px] text-outline text-center py-8 italic">Sem serviços ativos.</p>
                   )}
                 </div>
               </div>
@@ -224,65 +278,118 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
             </div>
 
             <form onSubmit={handleCreateDeal} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-bold text-slate-550 block mb-1">Título do Deal</label>
+              {/* Autocomplete do Cliente */}
+              <div className="relative">
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Cliente</label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Licenciamento Enterprise"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="Nome do cliente (ou busque na lista)..."
+                  value={clientSearch}
+                  onChange={(e) => {
+                    setClientSearch(e.target.value);
+                    setShowClientSuggestions(true);
+                  }}
+                  onFocus={() => setShowClientSuggestions(true)}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                />
+                {showClientSuggestions && (
+                  <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-md mt-1 max-h-40 overflow-y-auto shadow-lg">
+                    {filteredContacts.map((contact) => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        onClick={() => {
+                          setClientSearch(contact.name);
+                          setShowClientSuggestions(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 font-medium border-b border-slate-100 last:border-b-0 cursor-pointer flex flex-col"
+                      >
+                        <span className="font-bold">{contact.name}</span>
+                        <span className="text-[10px] text-slate-400">{contact.company || contact.email}</span>
+                      </button>
+                    ))}
+                    {filteredContacts.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-slate-500 italic">Nenhum cliente correspondente. Digite para criar novo.</div>
+                    )}
+                  </div>
+                )}
+                {showClientSuggestions && clientSearch.trim() !== "" && (
+                  <div className="flex items-center justify-between text-[10px] bg-slate-100 px-2 py-1.5 rounded mt-1">
+                    <span className="text-slate-600">Usando o nome digitado</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowClientSuggestions(false)}
+                      className="text-blue-600 font-bold hover:underline"
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Descrição do serviço */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Descrição do Serviço</label>
+                <textarea
+                  required
+                  placeholder="Ex: Lavagem de sofá retrátil 3 lugares com impermeabilização"
+                  rows={2}
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium resize-none"
+                />
+              </div>
+
+              {/* Data (preenchida automaticamente com data atual, editável) */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Data do Serviço</label>
+                <input
+                  type="date"
+                  required
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
                 />
               </div>
 
+              {/* Estágio Inicial */}
               <div>
-                <label className="text-[11px] font-bold text-slate-550 block mb-1">Empresa do Cliente</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Global Logistics Ltd"
-                  value={newCompany}
-                  onChange={(e) => setNewCompany(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
-                />
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Estágio Inicial</label>
+                <select
+                  value={newStage}
+                  onChange={(e) => setNewStage(e.target.value as any)}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-850 font-bold"
+                >
+                  {STAGES.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
               </div>
 
-              <div>
-                <label className="text-[11px] font-bold text-slate-550 block mb-1">Valor Unitário ($)</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: 85,000"
-                  value={newValueStr}
-                  onChange={(e) => setNewValueStr(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-bold"
-                />
-              </div>
-
+              {/* Valores em colunas */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Estágio Inicial</label>
-                  <select
-                    value={newStage}
-                    onChange={(e) => setNewStage(e.target.value as any)}
-                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-850 font-bold"
-                  >
-                    {STAGES.map((st) => (
-                      <option key={st} value={st}>{st}</option>
-                    ))}
-                  </select>
+                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Valor Cobrado ($/R$)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: 450"
+                    value={newValueStr}
+                    onChange={(e) => setNewValueStr(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-bold"
+                  />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Probabilidade (0-100%)</label>
+                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Valor Gasto p/ Realizar ($/R$)</label>
                   <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={newProbability}
-                    onChange={(e) => setNewProbability(parseInt(e.target.value) || 0)}
-                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-semibold"
+                    type="text"
+                    required
+                    placeholder="Ex: 80"
+                    value={newCostStr}
+                    onChange={(e) => setNewCostStr(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-850 font-semibold"
                   />
                 </div>
               </div>
@@ -299,7 +406,7 @@ export default function PipelineTab({ deals, setDeals, setActivities }: Pipeline
                   type="submit"
                   className="px-4 py-2 bg-slate-900 hover:bg-slate-850 text-white text-xs font-bold rounded-lg transition-all shadow-md cursor-pointer"
                 >
-                  Criar Oportunidade
+                  Criar Serviço (Deal)
                 </button>
               </div>
             </form>
