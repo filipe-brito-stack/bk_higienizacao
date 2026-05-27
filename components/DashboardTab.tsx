@@ -47,21 +47,27 @@ export default function DashboardTab({
     month: string;
     value: string;
     label: string;
-  } | null>({ month: "Nov", value: "$280k", label: "Receita Realizada" });
+  } | null>({ month: "Mai", value: "R$ 168k (atual)", label: "Faturamento Projetado" });
 
   const chartData = [
-    { key: "Jul", month: "Jul", value: "$185k", height: "h-32", bgClass: "bg-blue-500/40", fullValue: 185000 },
-    { key: "Ago", month: "Ago", value: "$210k", height: "h-36", bgClass: "bg-blue-500/60", fullValue: 210000 },
-    { key: "Set", month: "Set", value: "$195k", height: "h-34", bgClass: "bg-blue-500/50", fullValue: 195000 },
-    { key: "Out", month: "Out", value: "$245k", height: "h-38", bgClass: "bg-blue-500/80", fullValue: 245000 },
-    { key: "Nov", month: "Nov", value: "$280k", height: "h-40", bgClass: "bg-blue-500", fullValue: 280000 },
-    { key: "Dez", month: "Dez", value: "$168k (atual)", height: "h-24", bgClass: "bg-blue-500/30 border-t-2 border-dashed border-blue-500", fullValue: 168000 },
+    { key: "Dez", month: "Dez", value: "R$ 185k", height: "h-32", bgClass: "bg-blue-500/40", fullValue: 185000 },
+    { key: "Jan", month: "Jan", value: "R$ 210k", height: "h-36", bgClass: "bg-blue-500/60", fullValue: 210000 },
+    { key: "Fev", month: "Fev", value: "R$ 195k", height: "h-34", bgClass: "bg-blue-500/50", fullValue: 195000 },
+    { key: "Mar", month: "Mar", value: "R$ 245k", height: "h-38", bgClass: "bg-blue-500/80", fullValue: 245000 },
+    { key: "Abr", month: "Abr", value: "R$ 280k", height: "h-40", bgClass: "bg-blue-500", fullValue: 280000 },
+    { key: "Mai", month: "Mai", value: "R$ 168k (atual)", height: "h-24", bgClass: "bg-blue-500/30 border-t-2 border-dashed border-blue-500", fullValue: 168000 },
   ];
 
   // Dynamic calculations
   const totalRevenue = deals
     .filter((d) => d.stage === "Realizado")
     .reduce((sum, d) => sum + d.value, 0);
+
+  const totalCost = deals
+    .filter((d) => d.stage === "Realizado")
+    .reduce((sum, d) => sum + d.cost, 0);
+
+  const netProfit = totalRevenue - totalCost;
 
   const activeDealsCount = deals.filter(
     (d) => d.stage !== "Realizado"
@@ -126,7 +132,7 @@ export default function DashboardTab({
     } catch (err: any) {
       setAiInsights({
         summary: "Erro ao carregar insights preditivos.",
-        achievements: ["Sua receita alcançou $1.28M impulsionada por fechamentos recentes."],
+        achievements: ["Sua receita alcançou R$ 1.28M impulsionada por fechamentos recentes."],
         risks: ["Alguns clientes importantes estão sem interação registrada há mais de 3 dias."],
         recommendations: [
           {
@@ -134,7 +140,7 @@ export default function DashboardTab({
             description: "Escreva para Jane Doe da Acme Corporation para discutir novas propostas comerciais."
           }
         ],
-        predictedRevenue: "Previsão padrão estimada em $1.5M com base nas probabilidades cadastradas."
+        predictedRevenue: "Previsão padrão estimada em R$ 1.5M com base nas probabilidades cadastradas."
       });
     } finally {
       setAiLoading(false);
@@ -147,23 +153,13 @@ export default function DashboardTab({
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Dashboard</h1>
-          <p className="text-sm text-on-surface-variant mt-1">Bem-vindo de volta, Bruno. Aqui está o desempenho do seu pipeline hoje.</p>
-        </div>
-        <div className="flex items-center gap-2 self-start md:self-auto">
-          {/* AI Insights activator */}
-          <button
-            onClick={generateInsights}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg transition-all shadow-md active:scale-95 cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            Analisar com IA Gemini
-          </button>
+          <p className="text-sm text-on-surface-variant mt-1">Bem-vindo de volta, <b>Kawaguchi</b>. Aqui está o desempenho do seu pipeline hoje.</p>
         </div>
       </div>
 
       {/* KPI Stats Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Revenue */}
+        {/* Valor Total Recebido */}
         <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm relative overflow-hidden group">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
@@ -171,57 +167,62 @@ export default function DashboardTab({
             </div>
             <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
               <TrendingUp className="w-3.5 h-3.5" />
-              12.5%
+              Ativo
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Lucro Total Acumulado</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Total Recebido</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
-            ${totalRevenue.toLocaleString("pt-BR")}
+            R$ {totalRevenue.toLocaleString("pt-BR")}
           </h2>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
         </div>
 
-        {/* Conversion Rate */}
+        {/* Valor Gasto com Serviços */}
         <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm relative overflow-hidden group">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-purple-50 text-purple-700 rounded-lg">
-              <Filter className="w-5 h-5" />
+            <div className="p-2 bg-rose-50 text-rose-700 rounded-lg">
+              <TrendingDown className="w-5 h-5" />
             </div>
-            <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" />
-              3.2%
+            <span className="text-rose-700 bg-rose-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+              Despesa
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Taxa de Conversão</p>
-          <h2 className="text-2xl font-extrabold text-on-surface mt-1">24.8%</h2>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Gasto com Serviços</p>
+          <h2 className="text-2xl font-extrabold text-on-surface mt-1">
+            R$ {totalCost.toLocaleString("pt-BR")}
+          </h2>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-rose-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
         </div>
 
-        {/* Active Deals */}
+        {/* Valor Recebido Líquido */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm relative overflow-hidden group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+              Resultado
+            </span>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido Líquido</p>
+          <h2 className="text-2xl font-extrabold text-on-surface mt-1">
+            R$ {netProfit.toLocaleString("pt-BR")}
+          </h2>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-emerald-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+        </div>
+
+        {/* Deals Ativos no Funil */}
         <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm group relative overflow-hidden">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-amber-50 text-amber-700 rounded-lg">
               <Briefcase className="w-5 h-5" />
             </div>
-            <span className="text-rose-700 bg-rose-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-              <TrendingDown className="w-3.5 h-3.5" />
-              1.4%
+            <span className="text-amber-700 bg-amber-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+              Pipeline
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Deals Ativos no Funil</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Serviços ativos</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">{activeDealsCount}</h2>
-        </div>
-
-        {/* Avg Deal Cycle */}
-        <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-slate-50 text-slate-700 rounded-lg">
-              <Timer className="w-5 h-5" />
-            </div>
-            <span className="text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded text-xs font-semibold">Estável</span>
-          </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Ciclo Médio de Venda</p>
-          <h2 className="text-2xl font-extrabold text-on-surface mt-1">18 Dias</h2>
         </div>
       </section>
 
@@ -262,7 +263,7 @@ export default function DashboardTab({
                   className="flex-1 flex flex-col items-center gap-2 h-full justify-end cursor-pointer group"
                   onMouseEnter={() => setHoveredMonth(d.month)}
                   onMouseLeave={() => setHoveredMonth(null)}
-                  onClick={() => setSelectedMonthData({ month: d.month, value: d.value, label: d.month === "Dez" ? "Faturamento Projetado" : "Receita Realizada" })}
+                  onClick={() => setSelectedMonthData({ month: d.month, value: d.value, label: d.month === "Mai" ? "Faturamento Projetado" : "Receita Realizada" })}
                 >
                   <div className="relative w-full flex justify-center items-end h-full">
                     {/* Hover indicator tooltip */}
@@ -307,8 +308,8 @@ export default function DashboardTab({
                   <div className="bg-slate-950 h-full w-[82%] rounded-full transition-all duration-500"></div>
                 </div>
                 <div className="flex justify-between text-[10px] text-outline mt-1 px-1">
-                  <span>Meta de $1.5M</span>
-                  <span>Alcançado: $1,28M</span>
+                  <span>Meta de R$ 1.5M</span>
+                  <span>Alcançado: R$ 1,28M</span>
                 </div>
               </div>
 

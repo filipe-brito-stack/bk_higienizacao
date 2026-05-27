@@ -25,6 +25,8 @@ export interface Deal {
   stage: "Proposta" | "Agendado" | "Realizado";
   date: string; // Data da oportunidade/serviço preenchida por padrão
   owner: string;
+  photoBefore?: string;
+  photoAfter?: string;
 }
 
 export interface Task {

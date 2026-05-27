@@ -49,7 +49,7 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
     <div className="space-y-6 animate-fadeIn">
       {/* Top statistics section */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Razão de Deals</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Serviços</h1>
         <p className="text-sm text-on-surface-variant mt-1">Sintetize faturamentos, custos operacionais e margens líquidas brutas do seu negócio.</p>
       </div>
 
@@ -57,18 +57,18 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Faturamento Total</span>
-          <h3 className="text-xl font-black text-slate-900">${totalPipelineVal.toLocaleString("pt-BR")}</h3>
+          <h3 className="text-xl font-black text-slate-900">R$ {totalPipelineVal.toLocaleString("pt-BR")}</h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Soma de todos os serviços propostos, agendados e realizados.</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Custo Total Operacional</span>
-          <h3 className="text-xl font-black text-rose-600">${totalCostVal.toLocaleString("pt-BR")}</h3>
+          <h3 className="text-xl font-black text-rose-600">R$ {totalCostVal.toLocaleString("pt-BR")}</h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Soma de todos os gastos declarados para realização de serviços.</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs col-span-1">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Lucro Líquido Acumulado</span>
           <h3 className={`text-xl font-black ${totalNetProfit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
-            ${totalNetProfit.toLocaleString("pt-BR")}
+            R$ {totalNetProfit.toLocaleString("pt-BR")}
           </h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Saldo real líquido ({wonCount} concluídos com sucesso).</p>
         </div>
@@ -87,7 +87,6 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
                 <th className="px-6 py-4 text-right">Lucro Líquido</th>
                 <th className="px-6 py-4">Estágio</th>
                 <th className="px-6 py-4">Data do Serviço</th>
-                <th className="px-6 py-4">Proprietário</th>
                 <th className="px-6 py-4 text-right">Opções</th>
               </tr>
             </thead>
@@ -120,7 +119,7 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
                           className="bg-white border rounded px-2 py-1 w-20 text-right text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
                         />
                       ) : (
-                        <span className="font-extrabold text-slate-850">${deal.value.toLocaleString("pt-BR")}</span>
+                        <span className="font-extrabold text-slate-850">R$ {deal.value.toLocaleString("pt-BR")}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -132,11 +131,11 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
                           className="bg-white border rounded px-2 py-1 w-20 text-right text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
                         />
                       ) : (
-                        <span className="font-semibold text-rose-600">${deal.cost.toLocaleString("pt-BR")}</span>
+                        <span className="font-semibold text-rose-600">R$ {deal.cost.toLocaleString("pt-BR")}</span>
                       )}
                     </td>
                     <td className={`px-6 py-4 text-right font-bold ${netProfit >= 0 ? "text-slate-800" : "text-rose-750"}`}>
-                      ${netProfit.toLocaleString("pt-BR")}
+                      R$ {netProfit.toLocaleString("pt-BR")}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -149,7 +148,6 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-600 font-mono text-[11px]">{deal.date}</td>
-                    <td className="px-6 py-4 text-slate-600">{deal.owner}</td>
                     <td className="px-6 py-4 text-right">
                       {isEditing ? (
                         <div className="flex gap-1 justify-end">
@@ -171,7 +169,7 @@ export default function DealsTab({ deals, setDeals }: DealsTabProps) {
                           onClick={() => startEdit(deal)}
                           className="text-blue-600 font-bold hover:underline cursor-pointer text-[10px]"
                         >
-                          Editar params
+                          Editar
                         </button>
                       )}
                     </td>
