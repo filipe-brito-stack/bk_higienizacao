@@ -72,10 +72,7 @@ export default function SettingsTab({
             />
           </div>
 
-          <div className="p-4 bg-slate-50 rounded-lg text-xs leading-relaxed text-slate-700 space-y-2 border">
-            <span className="font-bold text-slate-900 block">💡 Nota de Arquitetura:</span>
-            As configurações editadas ficam armazenadas com persistência no local-state. Ao carregar o Painel Geral, as porcentagens de metas e previsões IA de receita recalcularão estas variáveis em tempo de execução.
-          </div>
+
 
           <div className="pt-4 text-right">
             <button

@@ -31,7 +31,7 @@ export default function ContactsTab({
   const [newEmail, setNewEmail] = useState("");
   const [newCompany, setNewCompany] = useState("");
   const [newRole, setNewRole] = useState("");
-  const [newStatus, setNewStatus] = useState<"Customer" | "Lead">("Lead");
+  const [newStatus, setNewStatus] = useState<"Customer" | "Lead">("Customer");
   const [newPhone, setNewPhone] = useState("");
   const [newAvatarUrl, setNewAvatarUrl] = useState("");
   const [newBirthMonth, setNewBirthMonth ] = useState("");
@@ -104,7 +104,11 @@ export default function ContactsTab({
     const matchesStatus = statusFilter === "All" || c.status === statusFilter;
 
     // Filter by inactive if requested from the AI panel
-    const matchesInactive = !filterInactiveOnly || c.lastContact.includes("Oct") || c.lastContact.includes("Days");
+    const matchesInactive = !filterInactiveOnly || 
+      c.lastContact.includes("Oct") || 
+      c.lastContact.includes("Out") || 
+      c.lastContact.toLowerCase().includes("days") || 
+      c.lastContact.toLowerCase().includes("dias");
 
     return matchesSearch && matchesStatus && matchesInactive;
   });
@@ -180,11 +184,11 @@ export default function ContactsTab({
       email: newEmail,
       company: "",
       role: "",
-      status: "Lead",
-      lastContact: "Just added",
+      status: newStatus,
+      lastContact: "Recém adicionado",
       avatarUrl: newAvatarUrl || AVATAR_PRESETS[2].url,
       phone: newPhone || "+1 (555) 000-0000",
-      owner: "Me",
+      owner: "Eu",
       birthMonth: newBirthMonth || undefined,
       birthYear: newBirthYear || undefined,
       address: newAddress || undefined,
@@ -198,9 +202,9 @@ export default function ContactsTab({
     const newActivity: Activity = {
       id: Math.random().toString(),
       type: "contact",
-      title: `New Contact Created: ${newContact.name}`,
-      sub: `Added as dynamic represent`,
-      time: "Just now",
+      title: `Novo Cliente Criado: ${newContact.name}`,
+      sub: `Adicionado como representante dinâmico`,
+      time: "Agora mesmo",
     };
     setActivities((prev) => [newActivity, ...prev]);
 
@@ -244,9 +248,9 @@ export default function ContactsTab({
     const newActivity: Activity = {
       id: Math.random().toString(),
       type: "contact",
-      title: `Contact profiles modified: ${editableContact.name}`,
-      sub: `Direct avatar links and parameters synchronized`,
-      time: "Just now",
+      title: `Perfil do Cliente Modificado: ${editableContact.name}`,
+      sub: `Links diretos de avatar e parâmetros sincronizados`,
+      time: "Agora mesmo",
     };
     setActivities((prev) => [newActivity, ...prev]);
 
@@ -263,9 +267,9 @@ export default function ContactsTab({
     const newActivity: Activity = {
       id: Math.random().toString(),
       type: "contact",
-      title: `Contact deleted: ${backupName}`,
-      sub: `Removed from database securely`,
-      time: "Just now",
+      title: `Cliente Excluído: ${backupName}`,
+      sub: `Removido do banco de dados com segurança`,
+      time: "Agora mesmo",
     };
     setActivities((prev) => [newActivity, ...prev]);
 
@@ -318,7 +322,7 @@ export default function ContactsTab({
 
       {/* Table Filters Bar */}
       <div className="bg-white p-4 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-outline/70 pointer-events-none" />
             <input
@@ -326,8 +330,24 @@ export default function ContactsTab({
               placeholder="Filtrar por nome..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="pl-8 pr-3 py-1.5 bg-slate-50 border border-outline-variant/40 rounded-lg text-xs focus:ring-1 focus:ring-slate-900 outline-none w-48 md:w-60"
+              className="pl-8 pr-3 py-1.5 bg-slate-50 border border-outline-variant/40 rounded-lg text-xs focus:ring-1 focus:ring-slate-900 outline-none w-44 md:w-56"
             />
+          </div>
+
+          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+            {(["All", "Customer", "Lead"] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => { setStatusFilter(status); setCurrentPage(1); }}
+                className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all active:scale-95 cursor-pointer ${
+                  statusFilter === status
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {status === "All" ? "Todos" : status === "Customer" ? "Clientes" : "Leads"}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -342,9 +362,10 @@ export default function ContactsTab({
         </div>
       </div>
 
-      {/* Main Table view */}
+      {/* Main Table / Mobile Cards view */}
       <div className="bg-white rounded-xl border border-outline-variant/40 shadow-sm overflow-hidden min-h-[300px] flex flex-col justify-between">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 border-b border-outline-variant/40 text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">
               <tr>
@@ -355,7 +376,7 @@ export default function ContactsTab({
                 <th className="px-6 py-4 text-right">Ação executiva</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant/20 text-xs">
+            <tbody className="divide-y divide-outline-variant/20 text-xs text-slate-700">
               {paginatedContacts.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-16 text-outline italic">
@@ -427,6 +448,75 @@ export default function ContactsTab({
           </table>
         </div>
 
+        {/* Mobile / Tablet Card View */}
+        <div className="block sm:hidden divide-y divide-slate-100 overflow-y-auto">
+          {paginatedContacts.length === 0 ? (
+            <div className="text-center py-16 text-slate-400 italic text-xs">
+              Nenhum cliente coincide com os filtros configurados.
+            </div>
+          ) : (
+            paginatedContacts.map((contact) => (
+              <div key={contact.id} className="p-4 space-y-3.5 hover:bg-slate-50 transition-colors">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span 
+                      onClick={() => handleOpenEditModal(contact)}
+                      className="font-bold text-slate-900 text-xs block hover:underline cursor-pointer"
+                    >
+                      {contact.name}
+                    </span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">{contact.email}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                    contact.status === "Customer" ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700"
+                  }`}>
+                    {contact.status === "Customer" ? "Cliente" : "Lead"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500 pt-1 font-medium border-t border-slate-50">
+                  <div>
+                    <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Aniversário</span>
+                    <span>{contact.birthMonth && contact.birthYear ? `${contact.birthMonth}/${contact.birthYear}` : <span className="text-slate-300 italic">Não informado</span>}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Último Contato</span>
+                    <span>{contact.lastContact}</span>
+                  </div>
+                </div>
+
+                {contact.address && (
+                  <div className="text-[10px] text-slate-500 border-t border-slate-50 pt-1.5">
+                    <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Endereço</span>
+                    <div className="flex flex-col gap-1 mt-0.5">
+                      <span className="truncate block max-w-xs">{contact.address}</span>
+                      {contact.latitude !== undefined && contact.longitude !== undefined && (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${contact.latitude},${contact.longitude}`}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="text-[9px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-0.5"
+                        >
+                          📍 Ver localização no mapa
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-50">
+                  <button
+                    onClick={() => handleOpenEditModal(contact)}
+                    className="px-3.5 py-1.5 bg-slate-100 active:bg-slate-200 text-slate-700 font-bold transition-all rounded-md text-[10px] h-9 flex items-center justify-center min-w-[70px]"
+                  >
+                    Editar
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Dynamic Pagination Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-outline-variant/30 flex items-center justify-between text-xs font-semibold text-on-surface-variant">
           <span>Mostrando {paginatedContacts.length} de {filteredContacts.length} entradas</span>
@@ -494,7 +584,7 @@ export default function ContactsTab({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Telefone Principal</label>
+                  <label className="text-[11px] font-bold text-slate-555 block mb-1">Telefone Principal</label>
                   <input
                     type="text"
                     value={editableContact.phone || ""}
@@ -515,6 +605,8 @@ export default function ContactsTab({
                   />
                 </div>
               </div>
+
+
 
               {/* Endereço com Geolocalização Opcional - EDIT */}
               <div>
@@ -625,6 +717,8 @@ export default function ContactsTab({
                   />
                 </div>
               </div>
+
+
 
               {/* Endereço com Geolocalização Opcional */}
               <div>

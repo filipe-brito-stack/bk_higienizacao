@@ -39,6 +39,7 @@ function formatToBRL(value: string): string {
 
 export default function PipelineTab({ deals, setDeals, setActivities, contacts = [] }: PipelineTabProps) {
   const [showAddDeal, setShowAddDeal] = useState(false);
+  const [activeStageFilter, setActiveStageFilter] = useState<Deal["stage"] | "Todos">("Todos");
   
   // Custom form states
   const [clientSearch, setClientSearch] = useState("");
@@ -115,7 +116,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       type: updatedStage === "Realizado" ? "closed" : "contact",
       title: `Estágio alterado: ${deal.serviceDescription}`,
       sub: `Progresso: ${deal.stage} → <b>${updatedStage}</b> (R$ ${deal.value.toLocaleString("pt-BR")})`,
-      time: "Just now",
+      time: "Agora mesmo",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
   };
@@ -149,7 +150,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       type: "contact",
       title: `Serviço cadastrado: ${createdDeal.serviceDescription}`,
       sub: `Cliente: ${createdDeal.clientName} | Estágio: ${createdDeal.stage} | Valor: R$ ${createdDeal.value.toLocaleString("pt-BR")}`,
-      time: "Just now",
+      time: "Agora mesmo",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
 
@@ -179,9 +180,9 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
     const newActivity: Activity = {
       id: generateActivityId(id, "delete"),
       type: "contact",
-      title: `Deal excluído: ${description}`,
+      title: `Serviço removido: ${description}`,
       sub: `Serviço removido do fluxo de trabalho.`,
-      time: "Just now",
+      time: "Agora mesmo",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
   };
@@ -205,9 +206,26 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
         </button>
       </div>
 
+      {/* Mobile Stage Selector Tab bar */}
+      <div className="md:hidden flex bg-white p-1 rounded-lg border border-slate-200/80 gap-1 shadow-xs select-none">
+        {(["Todos", ...STAGES] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveStageFilter(tab)}
+            className={`flex-1 text-center py-2.5 rounded-md text-xs font-bold transition-all active:scale-[0.97] cursor-pointer ${
+              activeStageFilter === tab
+                ? "bg-slate-900 text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
       {/* Kanban Stages Grid viewport */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-4">
-        {STAGES.map((stage) => {
+        {STAGES.filter((stage) => activeStageFilter === "Todos" || activeStageFilter === stage).map((stage) => {
           const stageDeals = deals.filter((d) => d.stage === stage);
           const totalSum = getStageTotal(stage);
 

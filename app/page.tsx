@@ -13,8 +13,14 @@ import {
   Bell, 
   Sparkles,
   Menu,
-  X
+  X,
+  Lock,
+  User,
+  LogOut,
+  Eye,
+  EyeOff
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 // Import modules
 import DashboardTab from "@/components/DashboardTab";
@@ -31,7 +37,7 @@ const INITIAL_CONTACTS: Contact[] = [
     company: "Acme Corporation",
     role: "Senior VP Sales",
     status: "Customer",
-    lastContact: "2 hours ago",
+    lastContact: "Há 2 horas",
     phone: "+1 (555) 234-5678",
     owner: "Me",
     avatarUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuCarguWrWz5TWuyV6J_UVDN5rwVyzWcZMTtr52bjn07D7M9xSdszI53dsc5UF585772DUC5tWmmbHW55R7ThXndO9RlF_e6oI6SyhTXr9W1yTbwdiUO9Bglwg74xc8lGjvrINyxai500AmXaOvTlxAZUwmPf5pvVLcdJu9oJoeJ78_a37zTkMzjS6e4M0nZMgHfm3kB6XFBkxL3rwY0QlUsbiRTcbIylcaywtB6k9EukHfT19o1-PZYQOeK-TLPzKcY6LLKx0-VKqg"
@@ -43,10 +49,10 @@ const INITIAL_CONTACTS: Contact[] = [
     company: "TechStart Inc.",
     role: "CTO",
     status: "Lead",
-    lastContact: "Yesterday",
+    lastContact: "Ontem",
     phone: "+1 (555) 876-5432",
     owner: "Sarah Miller",
-    avatarUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuBMzDxcw3E8i9B8dw3x535fnmjuUd0cwm7y5QHCMpSmqVaKWPjW4T89mjRqi_R91t3WoKpNsx90j19uGNnM74LsuzeXzvFWt5O5ElcPAUrZ9IkRm6q8zP8NL300z8eIlu6GR8ObbX7eVunGyMfJ1gLYoFnIUL0QizMN7SpFJT4h8LVHzo5g7nkioGrEjeMG_VOjEA_G6fA56gSi8LrLP6y7wCn1jaNi4eC4QVoVmldIXmesJBor_U1pUPWp6bJUgg81gKLKvm5mqmQ"
+    avatarUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuBMzDxcw3E8i9B8dw3x535fnmjuUd0cwm7y5QHCMpSmqVaKWPjW4T89mjRqi_R91t3WoKpNsx90j19uGNnM74LsuzeXzvFWt5O5ElcPAUrZ9IkRm6q8zP8NL300z8eIlu6GR8ObbX7eVunGyMfJ1gLYoFnIUL0QizMN7SpFJT4h8LVHzo5g7nkioGrEjeMG_VOjEA_G6fA56gSi8LrLP6y7wCn1jaNi4eC4QVoVmldIXmesJBor_U1pUPWp6bJUgg1gKLKvm5mqmQ"
   },
   {
     id: "c3",
@@ -55,7 +61,7 @@ const INITIAL_CONTACTS: Contact[] = [
     company: "GlobalWeb",
     role: "Head of Operations",
     status: "Lead",
-    lastContact: "Oct 12, 2023",
+    lastContact: "12 de Out, 2023",
     phone: "+1 (555) 345-6789",
     owner: "Me",
     avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80"
@@ -67,7 +73,7 @@ const INITIAL_CONTACTS: Contact[] = [
     company: "FinCloud",
     role: "Procurement Director",
     status: "Customer",
-    lastContact: "Oct 08, 2023",
+    lastContact: "08 de Out, 2023",
     phone: "+1 (555) 987-6543",
     owner: "Sarah Miller",
     avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&auto=format&fit=crop&q=80"
@@ -79,7 +85,7 @@ const INITIAL_CONTACTS: Contact[] = [
     company: "Nexus Design",
     role: "Creative Lead",
     status: "Lead",
-    lastContact: "Oct 05, 2023",
+    lastContact: "05 de Out, 2023",
     phone: "+1 (555) 456-7890",
     owner: "Me",
     avatarUrl: "https://picsum.photos/seed/emily/120/120"
@@ -172,35 +178,35 @@ const INITIAL_DEALS: Deal[] = [
 const INITIAL_TASKS: Task[] = [
   {
     id: "t1",
-    title: "Follow up with TechFlow Inc.",
-    associatedWith: "Deal: Higienização Completa (Stage: Proposta)",
+    title: "Acompanhamento com TechFlow Inc.",
+    associatedWith: "Serviço: Higienização Completa (Estágio: Proposta)",
     completed: false,
     priority: "Urgent",
-    dueDate: "Today"
+    dueDate: "Hoje"
   },
   {
     id: "t2",
-    title: "Review quarterly contract - Zenith",
-    associatedWith: "Zenith Retainer Support",
+    title: "Revisar contrato trimestral - Zenith",
+    associatedWith: "Suporte Recorrente Zenith",
     completed: false,
     priority: "Medium",
-    dueDate: "In 2 days"
+    dueDate: "Em 2 dias"
   },
   {
     id: "t3",
-    title: "Send introductory deck to Spark Labs",
-    associatedWith: "Incoming lead from Website",
+    title: "Enviar apresentação institucional para Spark Labs",
+    associatedWith: "Lead recebida pelo Website",
     completed: false,
     priority: "Low",
-    dueDate: "Next week"
+    dueDate: "Próxima semana"
   },
   {
     id: "t4",
-    title: "Team sync: Sales Q4 Strategy",
-    associatedWith: "Nexus Boardroom Room 3",
+    title: "Alinhamento da equipe: Estratégia de Vendas T4",
+    associatedWith: "Sala de Reuniões Nexus - Sala 3",
     completed: false,
     priority: "Medium",
-    dueDate: "Today at 3:00 PM"
+    dueDate: "Hoje às 15:00"
   }
 ];
 
@@ -208,30 +214,30 @@ const INITIAL_ACTIVITIES: Activity[] = [
   {
     id: "a1",
     type: "closed",
-    title: "Deal Closed: Project Aurora ($42,000)",
-    sub: "Closed by <b>Sarah Miller</b> • 2 hours ago",
-    time: "2 hours ago"
+    title: "Serviço Fechado: Projeto Aurora (R$ 42.000)",
+    sub: "Fechado por <b>Sarah Miller</b> • Há 2 horas",
+    time: "Há 2 horas"
   },
   {
     id: "a2",
     type: "email",
-    title: "Email Opened: Proposal for Global Logistics Ltd",
-    sub: "Sent by <b>You</b> • 4 hours ago",
-    time: "4 hours ago"
+    title: "E-mail Aberto: Proposta para Global Logistics Ltd",
+    sub: "Enviado por <b>Você</b> • Há 4 horas",
+    time: "Há 4 horas"
   },
   {
     id: "a3",
     type: "contact",
-    title: "New Contact Added: Robert Fox",
-    sub: "Company: <b>Atlas Group</b> • 6 hours ago",
-    time: "6 hours ago"
+    title: "Novo Cliente Adicionado: Robert Fox",
+    sub: "Empresa: <b>Atlas Group</b> • Há 6 horas",
+    time: "Há 6 horas"
   },
   {
     id: "a4",
     type: "call",
-    title: "Outbound Call: Follow-up with Cyberdyne",
-    sub: "Duration: 12m 40s • Yesterday",
-    time: "Yesterday"
+    title: "Ligação Realizada: Acompanhamento com Cyberdyne",
+    sub: "Duração: 12m 40s • Ontem",
+    time: "Ontem"
   }
 ];
 
@@ -249,6 +255,14 @@ export default function RootPage() {
     "dashboard" | "pipeline" | "contacts" | "deals" | "settings"
   >("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   // CRM State databases
   const [mounted, setMounted] = useState(false);
@@ -388,6 +402,13 @@ export default function RootPage() {
       } catch (e) {
         console.error("Error loading cached profile pic", e);
       }
+
+      try {
+        const cachedLoggedIn = localStorage.getItem("nexus_logged_in") === "true";
+        if (cachedLoggedIn) setIsAuthenticated(true);
+      } catch (e) {
+        console.error("Error loading cached auth state", e);
+      }
       /* eslint-enable react-hooks/set-state-in-effect */
     }
     setMounted(true);
@@ -438,6 +459,186 @@ export default function RootPage() {
   const clearInactiveFilter = () => {
     setFilterInactiveOnly(false);
   };
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usernameInput.trim()) {
+      setLoginError("Por favor, insira seu usuário.");
+      return;
+    }
+    if (!passwordInput.trim()) {
+      setLoginError("Por favor, insira sua senha.");
+      return;
+    }
+    
+    const lowerUser = usernameInput.trim().toLowerCase();
+    if (
+      (lowerUser === "bruno" && passwordInput === "bk1234") ||
+      (lowerUser === "admin" && passwordInput === "admin")
+    ) {
+      const formattedName = usernameInput.trim().toLowerCase() === "bruno" ? "Bruno" : usernameInput.trim();
+      setProfileName(formattedName);
+      setIsAuthenticated(true);
+      setLoginError("");
+      if (rememberMe) {
+        localStorage.setItem("nexus_logged_in", "true");
+        localStorage.setItem("nexus_profile_name", formattedName);
+      }
+    } else {
+      setLoginError("Usuário ou senha inválidos. Dica: bruno / bk1234.");
+    }
+  };
+
+  if (!mounted) {
+    return (
+      <div className="bg-[#030d1a] text-slate-300 min-h-screen flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-4 animate-pulse">
+          <div className="w-16 h-16 rounded-xl bg-slate-800/80 p-2 flex items-center justify-center shadow-lg border border-slate-700/50">
+            <div className="w-10 h-10 border-4 border-slate-600 border-t-white rounded-full animate-spin" />
+          </div>
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Carregando Sistema...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="bg-[#030d1a] text-slate-200 min-h-screen flex items-center justify-center p-4 selection:bg-blue-600 selection:text-white relative overflow-hidden font-sans w-full">
+        {/* Subtle background glow decorative elements */}
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[45%] h-[45%] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none" />
+
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full max-w-md bg-slate-900/70 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-2xl relative z-10"
+        >
+          {/* Logo Heading Header */}
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="w-20 h-20 rounded-2xl bg-white overflow-hidden flex items-center justify-center p-2.5 shadow-xl border border-slate-700/50 mb-4 hover:scale-[1.03] transition-transform duration-300">
+              <img
+                src="/logo.png"
+                alt="BK Higienização"
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div>
+              <span className="text-[10px] bg-blue-500/10 text-blue-400 font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border border-blue-500/10">
+                Área Administrativa
+              </span>
+              <h1 className="text-xl md:text-2xl font-black text-white mt-3.5 tracking-tight">
+                BK Higienização
+              </h1>
+              <p className="text-[11px] text-slate-400 mt-1 font-medium max-w-xs uppercase tracking-wider">
+                Sistema Interno de CRM e Gestão de Serviços
+              </p>
+            </div>
+          </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5 pl-0.5">
+                Usuário
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <User className="h-4 w-4 text-slate-500" />
+                </div>
+                <input
+                  type="text"
+                  required
+                  placeholder="Seu usuário (Ex: bruno)"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/40 border border-slate-700/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-800/70 transition-all font-medium h-11"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1.5 pl-0.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Senha Geral
+                </label>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-slate-500" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="Sua senha de acesso"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/40 border border-slate-700/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-800/70 transition-all font-medium h-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me Toggle */}
+            <div className="flex items-center justify-between pt-1 select-none">
+              <label className="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-300 transition-colors text-xs font-semibold">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                />
+                Lembrar-me neste aparelho
+              </label>
+            </div>
+
+            {/* Error Message Box */}
+            {loginError && (
+              <motion.div 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[11px] text-rose-300 font-bold leading-relaxed shadow-sm flex items-center gap-2"
+              >
+                <div className="w-1.5 h-1.5 bg-rose-400 rounded-full animate-ping shrink-0" />
+                <span>{loginError}</span>
+              </motion.div>
+            )}
+
+            {/* Login Button */}
+            <button
+              type="submit"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-extrabold rounded-xl transition-all shadow-lg shadow-blue-600/10 hover:shadow-blue-600/20 flex items-center justify-center gap-2 mt-4 text-xs tracking-wider uppercase cursor-pointer"
+            >
+              Acessar Painel administrativo
+            </button>
+          </form>
+
+          {/* Quick Access Helper hint box */}
+          <div className="mt-8 pt-5 border-t border-slate-800/60 text-center">
+            <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-widest block mb-2">
+              Acesso de Produção
+            </span>
+            <div className="bg-slate-800/40 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 leading-normal inline-block w-full">
+              Dica: Utilize o administrador principal <br />
+              Usuário: <strong className="text-blue-400">bruno</strong> e Senha: <strong className="text-blue-400">bk1234</strong>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#f7f9fb] text-slate-800 min-h-screen antialiased flex">
@@ -560,6 +761,18 @@ export default function RootPage() {
             <Settings className="w-4 h-4" />
             <span>Configurações</span>
           </button>
+
+          <button
+            onClick={() => {
+              setIsAuthenticated(false);
+              localStorage.removeItem("nexus_logged_in");
+              setSidebarOpen(false);
+            }}
+            className="flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50/50 hover:text-rose-700 transition-all cursor-pointer mt-1"
+          >
+            <LogOut className="w-4 h-4 text-rose-500" />
+            <span>Sair do Sistema</span>
+          </button>
         </div>
       </aside>
 
@@ -582,9 +795,9 @@ export default function RootPage() {
             <div className="flex items-center gap-0.5 sm:gap-1 relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-full text-slate-500 relative transition-colors cursor-pointer"
+                className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-full text-slate-500 relative transition-colors cursor-pointer flex items-center justify-center"
               >
-                <span className="material-symbols-outlined text-sm font-semibold">notifications</span>
+                <Bell className="w-4 h-4 text-slate-600" />
                 <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-600 rounded-full border border-white animate-pulse"></span>
               </button>
 
