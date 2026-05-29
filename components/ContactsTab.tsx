@@ -21,7 +21,7 @@ export default function ContactsTab({
 }: ContactsTabProps) {
   // Search & Basic Filter States
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | "Customer" | "Lead">("All");
+  const [statusFilter, setStatusFilter] = useState<"All" | "Customer" | "Lead">("Customer");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -287,7 +287,7 @@ export default function ContactsTab({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Diretório de Clientes</h1>
-          <p className="text-sm text-on-surface-variant mt-1">Gerencie leads, contatos corporativos e visualize links diretos das suas imagens.</p>
+          <p className="text-sm text-on-surface-variant mt-1">Gerenciamento de clientes.</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -333,28 +333,12 @@ export default function ContactsTab({
               className="pl-8 pr-3 py-1.5 bg-slate-50 border border-outline-variant/40 rounded-lg text-xs focus:ring-1 focus:ring-slate-900 outline-none w-44 md:w-56"
             />
           </div>
-
-          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-            {(["All", "Customer", "Lead"] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => { setStatusFilter(status); setCurrentPage(1); }}
-                className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all active:scale-95 cursor-pointer ${
-                  statusFilter === status
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                {status === "All" ? "Todos" : status === "Customer" ? "Clientes" : "Leads"}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="flex items-center gap-3 text-xs justify-between md:justify-end">
           <span className="text-on-surface-variant font-medium">{filteredContacts.length} clientes encontrados</span>
           <button
-            onClick={() => { setSearchTerm(""); setStatusFilter("All"); clearFilters(); }}
+            onClick={() => { setSearchTerm(""); setStatusFilter("Customer"); clearFilters(); }}
             className="text-blue-600 font-semibold hover:underline"
           >
             Limpar Filtros
@@ -373,7 +357,7 @@ export default function ContactsTab({
                 <th className="px-6 py-4">Aniversário</th>
                 <th className="px-6 py-4">Endereço / Localização</th>
                 <th className="px-6 py-4">Último contato</th>
-                <th className="px-6 py-4 text-right">Ação executiva</th>
+                <th className="px-6 py-4 text-right">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/20 text-xs text-slate-700">

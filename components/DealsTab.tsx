@@ -65,6 +65,81 @@ function formatTaskDueDate(due: string): string {
   return word;
 }
 
+function isCurrentMonth(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1-12
+  
+  const paddedMonth = month.toString().padStart(2, "0");
+  const clean = dateStr.trim();
+  const lower = clean.toLowerCase();
+  
+  if (
+    lower.includes("hoje") ||
+    lower.includes("amanhã") ||
+    lower.includes("today") ||
+    lower.includes("tomorrow") ||
+    lower.includes("em 2 dias") ||
+    lower.includes("em 3 dias") ||
+    lower.includes("próxima semana") ||
+    lower.includes("next week")
+  ) {
+    return true;
+  }
+  
+  if (clean.startsWith(`${year}-${paddedMonth}`)) {
+    return true;
+  }
+  
+  const brSuffix = `/${paddedMonth}/${year}`;
+  if (clean.includes(brSuffix)) {
+    return true;
+  }
+  
+  return false;
+}
+
+function formatServiceDate(dateStr: string): string {
+  if (!dateStr) return "";
+  const trimmed = dateStr.trim();
+  
+  // Match standard ISO dates YYYY-MM-DD
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const [_, year, month, day] = isoMatch;
+    return `${day}/${month}/${year}`;
+  }
+  
+  // Match YYYY/MM/DD
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(trimmed)) {
+    const parts = trimmed.split('/');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  
+  return trimmed;
+}
+
+function formatBRL(value: string | number): string {
+  if (value === undefined || value === null || value === "") return "";
+  
+  if (typeof value === "number") {
+    return value.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+  
+  const clean = value.replace(/\D/g, "");
+  if (!clean) return "";
+  
+  const numeric = parseFloat(clean) / 100;
+  return numeric.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default function DealsTab({ 
   deals, 
   setDeals, 
@@ -75,6 +150,14 @@ export default function DealsTab({
   const [editPrice, setEditPrice] = useState("");
   const [editCost, setEditCost] = useState("");
   const [editDescription, setEditDescription] = useState("");
+
+  // Pagination for deals
+  const [currentDealPage, setCurrentDealPage] = useState(1);
+  const DEALS_PER_PAGE = 5;
+  const totalDealPages = Math.ceil(deals.length / DEALS_PER_PAGE);
+  const activeDealPage = Math.min(currentDealPage, totalDealPages || 1);
+  const startDealIndex = (activeDealPage - 1) * DEALS_PER_PAGE;
+  const paginatedDeals = deals.slice(startDealIndex, startDealIndex + DEALS_PER_PAGE);
 
   // Pagination for tasks
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,7 +178,7 @@ export default function DealsTab({
   const startEditTask = (task: Task) => {
     setEditingTaskId(task.id);
     setEditTaskTitle(task.title);
-    setEditTaskValue(task.value !== undefined ? task.value.toString() : "");
+    setEditTaskValue(task.value !== undefined ? formatBRL(task.value) : "");
     setEditTaskPriority(task.priority);
     setEditTaskDueDate(task.dueDate);
     setEditTaskAssociated(task.associatedWith || "");
@@ -103,7 +186,8 @@ export default function DealsTab({
 
   const handleSaveEditTask = (taskId: string) => {
     if (!editTaskTitle.trim()) return;
-    const valueNum = parseFloat(editTaskValue.replace(/[^0-9.]/g, ""));
+    const cleanStr = editTaskValue.replace(/[^\d,]/g, "").replace(",", ".");
+    const valueNum = parseFloat(cleanStr);
 
     setTasks((prev) =>
       prev.map((t) => {
@@ -121,27 +205,21 @@ export default function DealsTab({
     setEditingTaskId(null);
   };
 
-  // Dynamic calculations
-  const totalPipelineVal = deals.reduce((sum, d) => sum + d.value, 0);
-  const totalCostVal = deals.reduce((sum, d) => sum + d.cost, 0);
-  const totalNetProfit = totalPipelineVal - totalCostVal;
-  const wonCount = deals.filter((d) => d.stage === "Realizado").length;
+  // Dynamic calculations (filtered by current month only)
+  const currentMonthDeals = deals.filter((d) => isCurrentMonth(d.date));
 
-  // Custo Operacional based on values of tasks completed in the current month
+  const totalPipelineVal = currentMonthDeals.reduce((sum, d) => sum + d.value, 0);
+  const totalCostVal = currentMonthDeals.reduce((sum, d) => sum + d.cost, 0);
+  const totalNetProfit = totalPipelineVal - totalCostVal;
+  const wonCount = currentMonthDeals.filter((d) => d.stage === "Realizado").length;
+
+  // Custo de Manutenção based on values of tasks completed in the current month
   const tasksOperationalCost = tasks
     .filter((task) => {
       if (!task.completed) return false;
       const val = task.value || 0;
       if (val <= 0) return false;
-
-      // Filter by current month (May 2026)
-      const due = (task.dueDate || "").toLowerCase().trim();
-      
-      // If manually explicitly tagged with another month, ignore
-      if (due.includes("2026-04") || due.includes("/04/")) return false;
-      if (due.includes("2026-06") || due.includes("/06/")) return false;
-
-      return true;
+      return isCurrentMonth(task.dueDate);
     })
     .reduce((sum, task) => sum + (task.value || 0), 0);
 
@@ -186,19 +264,19 @@ export default function DealsTab({
           <p className="text-[10px] text-on-surface-variant mt-1">Soma de todos os serviços propostos, agendados e realizados.</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
-          <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Custo Total Operacional</span>
+          <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Custo Operacional</span>
           <h3 className="text-xl font-black text-rose-600">R$ {totalCostVal.toLocaleString("pt-BR")}</h3>
-          <p className="text-[10px] text-on-surface-variant mt-1">Soma de todos os gastos declarados para realização de serviços.</p>
+          <p className="text-[10px] text-on-surface-variant mt-1">Soma dos gastos para realização de serviços.</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
-          <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Lucro Líquido Acumulado</span>
+          <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Lucro Líquido</span>
           <h3 className={`text-xl font-black ${totalNetProfit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
             R$ {totalNetProfit.toLocaleString("pt-BR")}
           </h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Saldo real líquido ({wonCount} concluídos com sucesso).</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
-          <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Custo Operacional</span>
+          <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Custo de Manutenção</span>
           <h3 className="text-xl font-black text-indigo-600">
             R$ {tasksOperationalCost.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h3>
@@ -214,17 +292,17 @@ export default function DealsTab({
             <thead className="bg-slate-50 border-b border-outline-variant/40 text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">
               <tr>
                 <th className="px-6 py-4">Cliente</th>
-                <th className="px-6 py-4">Descrição do Serviço</th>
-                <th className="px-6 py-4 text-right">Valor Cobrado</th>
+                <th className="px-6 py-4">Descrição</th>
+                <th className="px-6 py-4 text-right">Valor</th>
                 <th className="px-6 py-4 text-right">Valor Gasto</th>
                 <th className="px-6 py-4 text-right">Lucro Líquido</th>
-                <th className="px-6 py-4">Estágio</th>
-                <th className="px-6 py-4">Data do Serviço</th>
-                <th className="px-6 py-4 text-right">Opções</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Data</th>
+                <th className="px-6 py-4 text-right">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/20 font-medium">
-              {deals.map((deal) => {
+              {paginatedDeals.map((deal) => {
                 const isEditing = editingDealId === deal.id;
                 const netProfit = deal.value - deal.cost;
 
@@ -280,7 +358,7 @@ export default function DealsTab({
                         {deal.stage}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 font-mono text-[11px]">{deal.date}</td>
+                    <td className="px-6 py-4 text-slate-600 font-mono text-[11px]">{formatServiceDate(deal.date)}</td>
                     <td className="px-6 py-4 text-right">
                       {isEditing ? (
                         <div className="flex gap-1 justify-end">
@@ -315,7 +393,7 @@ export default function DealsTab({
 
         {/* Mobile alternate card view */}
         <div className="block sm:hidden divide-y divide-slate-100 overflow-y-auto">
-          {deals.map((deal) => {
+          {paginatedDeals.map((deal) => {
             const isEditing = editingDealId === deal.id;
             const netProfit = deal.value - deal.cost;
 
@@ -325,7 +403,7 @@ export default function DealsTab({
                   <div>
                     <span className="font-bold text-slate-900 block text-xs">{deal.clientName}</span>
                     <span className="text-[10px] text-slate-400 mt-0.5 block">
-                      Data: <span className="font-medium text-slate-600">{deal.date}</span>
+                      Data: <span className="font-medium text-slate-600">{formatServiceDate(deal.date)}</span>
                     </span>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold tracking-wider uppercase ${
@@ -416,6 +494,36 @@ export default function DealsTab({
             );
           })}
         </div>
+
+        {/* Pagination Controls for Deals */}
+        {totalDealPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-6 py-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 font-semibold select-none animate-fadeIn">
+            <span>
+              Mostrando {startDealIndex + 1} a {Math.min(startDealIndex + DEALS_PER_PAGE, deals.length)} de {deals.length} serviços
+            </span>
+            <div className="flex gap-2 items-center">
+              <button
+                type="button"
+                disabled={activeDealPage === 1}
+                onClick={() => setCurrentDealPage(activeDealPage - 1)}
+                className="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold disabled:opacity-40 disabled:hover:bg-white hover:bg-slate-50 cursor-pointer transition-all shadow-xs"
+              >
+                Anterior
+              </button>
+              <span className="px-2 text-[10px] font-extrabold text-slate-800">
+                Página {activeDealPage} de {totalDealPages}
+              </span>
+              <button
+                type="button"
+                disabled={activeDealPage === totalDealPages}
+                onClick={() => setCurrentDealPage(activeDealPage + 1)}
+                className="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold disabled:opacity-40 disabled:hover:bg-white hover:bg-slate-50 cursor-pointer transition-all shadow-xs"
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* NEW SECTION: Tarefas Cadastradas */}
@@ -539,7 +647,7 @@ export default function DealsTab({
                               <input
                                 type="text"
                                 value={editTaskValue}
-                                onChange={(e) => setEditTaskValue(e.target.value)}
+                                onChange={(e) => setEditTaskValue(formatBRL(e.target.value))}
                                 placeholder="0,00"
                                 className="bg-slate-50 border border-slate-205 px-2 py-1.5 rounded text-xs focus:bg-white outline-none w-24 text-right font-extrabold focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
                               />
@@ -663,7 +771,7 @@ export default function DealsTab({
                             <input
                               type="text"
                               value={editTaskValue}
-                              onChange={(e) => setEditTaskValue(e.target.value)}
+                              onChange={(e) => setEditTaskValue(formatBRL(e.target.value))}
                               placeholder="0,00"
                               className="bg-white border border-slate-200 px-2 py-1.5 w-full text-xs font-extrabold focus:ring-1 focus:ring-blue-600 outline-none rounded text-right"
                             />

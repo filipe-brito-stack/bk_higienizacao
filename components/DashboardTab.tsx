@@ -4,6 +4,26 @@ import React, { useState } from "react";
 import { Contact, Deal, Task, Activity, CRMGoals } from "@/lib/types";
 import { DollarSign, Filter, Briefcase, Timer, TrendingUp, TrendingDown, Sparkles, Info, CheckCircle2, Mail, UserPlus, Phone, Award, AlertTriangle } from "lucide-react";
 
+function formatBRL(value: string | number): string {
+  if (value === undefined || value === null || value === "") return "";
+  
+  if (typeof value === "number") {
+    return value.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+  
+  const clean = value.replace(/\D/g, "");
+  if (!clean) return "";
+  
+  const numeric = parseFloat(clean) / 100;
+  return numeric.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 interface DashboardTabProps {
   contacts: Contact[];
   deals: Deal[];
@@ -88,7 +108,8 @@ export default function DashboardTab({
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
-    const parsedValue = newTaskValue.trim() ? parseFloat(newTaskValue) : undefined;
+    const cleanStr = newTaskValue.replace(/[^\d,]/g, "").replace(",", ".");
+    const parsedValue = cleanStr ? parseFloat(cleanStr) : undefined;
 
     const newTask: Task = {
       id: Math.random().toString(),
@@ -360,8 +381,8 @@ export default function DashboardTab({
           <div>
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-base font-bold text-on-surface">Tarefas Pendentes</h3>
-                <p className="text-xs text-on-surface-variant">Agendamentos e ações comerciais de hoje.</p>
+                <h3 className="text-base font-bold text-on-surface">Tarefas</h3>
+                <p className="text-xs text-on-surface-variant">Agendamentos e ações comerciais.</p>
               </div>
               {urgentTasksCount > 0 && (
                 <span className="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[11px] font-semibold animate-pulse">
@@ -385,12 +406,11 @@ export default function DashboardTab({
                 </div>
                 <div className="sm:col-span-3">
                   <input
-                    type="number"
-                    step="any"
-                    placeholder="Valor (R$)"
+                    type="text"
+                    placeholder="0,00"
                     value={newTaskValue}
-                    onChange={(e) => setNewTaskValue(e.target.value)}
-                    className="w-full bg-white border border-outline-variant/50 px-3 py-2 rounded text-xs focus:ring-1 focus:ring-slate-900 outline-none h-11 sm:h-9"
+                    onChange={(e) => setNewTaskValue(formatBRL(e.target.value))}
+                    className="w-full bg-white border border-outline-variant/50 px-3 py-2 rounded text-xs focus:ring-1 focus:ring-slate-900 outline-none h-11 sm:h-9 text-right font-extrabold"
                   />
                 </div>
                 <div className="sm:col-span-3 flex gap-2 w-full">
