@@ -36,6 +36,7 @@ export interface Task {
   completed: boolean;
   priority: "Urgent" | "Medium" | "Low";
   dueDate: string;
+  value?: number;
 }
 
 export interface Activity {

@@ -182,7 +182,8 @@ const INITIAL_TASKS: Task[] = [
     associatedWith: "Serviço: Higienização Completa (Estágio: Proposta)",
     completed: false,
     priority: "Urgent",
-    dueDate: "Hoje"
+    dueDate: "Hoje",
+    value: 1250.00
   },
   {
     id: "t2",
@@ -190,7 +191,8 @@ const INITIAL_TASKS: Task[] = [
     associatedWith: "Suporte Recorrente Zenith",
     completed: false,
     priority: "Medium",
-    dueDate: "Em 2 dias"
+    dueDate: "Em 2 dias",
+    value: 450.00
   },
   {
     id: "t3",
@@ -875,6 +877,8 @@ export default function RootPage() {
             <DealsTab
               deals={deals}
               setDeals={setDeals}
+              tasks={tasks}
+              setTasks={setTasks}
             />
           )}
 

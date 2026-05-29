@@ -38,6 +38,7 @@ export default function DashboardTab({
 
   // Quick Task Input State
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskValue, setNewTaskValue] = useState("");
   const [newTaskAssociated, setNewTaskAssociated] = useState("Tarefa Direta");
   const [newTaskPriority, setNewTaskPriority] = useState<"Urgent" | "Medium" | "Low">("Medium");
 
@@ -87,23 +88,27 @@ export default function DashboardTab({
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
+    const parsedValue = newTaskValue.trim() ? parseFloat(newTaskValue) : undefined;
+
     const newTask: Task = {
       id: Math.random().toString(),
       title: newTaskTitle,
       associatedWith: newTaskAssociated,
       completed: false,
       priority: newTaskPriority,
-      dueDate: "Today",
+      dueDate: "Hoje",
+      value: isNaN(parsedValue ?? NaN) ? undefined : parsedValue,
     };
 
     setTasks((prev) => [newTask, ...prev]);
 
     // Add activity log
+    const valorMsg = parsedValue && !isNaN(parsedValue) ? ` (Valor: R$ ${parsedValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : "";
     const newActivity: Activity = {
       id: Math.random().toString(),
       type: "contact",
       title: `Tarefa criada: ${newTaskTitle}`,
-      sub: `Definida com prioridade ${newTaskPriority === "Urgent" ? "Urgente" : newTaskPriority === "Medium" ? "Média" : "Baixa"}`,
+      sub: `Definida com prioridade ${newTaskPriority === "Urgent" ? "Urgente" : newTaskPriority === "Medium" ? "Média" : "Baixa"}${valorMsg}`,
       time: "Agora mesmo",
     };
     setActivities((prev) => [newActivity, ...prev]);
@@ -111,6 +116,7 @@ export default function DashboardTab({
     // Reset fields
     setNewTaskTitle("");
     setNewTaskPriority("Medium");
+    setNewTaskValue("");
   };
 
   // Trigger Gemini AI Insights
@@ -365,21 +371,33 @@ export default function DashboardTab({
             </div>
 
             {/* Quick adding task inline form */}
-            <form onSubmit={handleAddTask} className="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col gap-2">
+            <form onSubmit={handleAddTask} className="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col gap-2.5">
               <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Nova Tarefa Comercial</span>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  placeholder="Ex: Ligar para Sarah Miller"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className="flex-grow bg-white border border-outline-variant/50 px-3 py-2 rounded text-xs focus:ring-1 focus:ring-primary outline-none h-11 sm:h-9"
-                />
-                <div className="flex gap-2 w-full sm:w-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <div className="sm:col-span-6">
+                  <input
+                    type="text"
+                    placeholder="Ex: Ligar para Sarah Miller"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    className="w-full bg-white border border-outline-variant/50 px-3 py-2 rounded text-xs focus:ring-1 focus:ring-slate-900 outline-none h-11 sm:h-9"
+                  />
+                </div>
+                <div className="sm:col-span-3">
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="Valor (R$)"
+                    value={newTaskValue}
+                    onChange={(e) => setNewTaskValue(e.target.value)}
+                    className="w-full bg-white border border-outline-variant/50 px-3 py-2 rounded text-xs focus:ring-1 focus:ring-slate-900 outline-none h-11 sm:h-9"
+                  />
+                </div>
+                <div className="sm:col-span-3 flex gap-2 w-full">
                   <select
                     value={newTaskPriority}
                     onChange={(e) => setNewTaskPriority(e.target.value as any)}
-                    className="flex-1 sm:flex-initial bg-white border border-outline-variant/50 px-3 py-2 rounded text-xs outline-none text-on-surface-variant h-11 sm:h-9"
+                    className="flex-grow bg-white border border-outline-variant/50 px-1.5 py-2 rounded text-[11px] outline-none text-on-surface-variant h-11 sm:h-9"
                   >
                     <option value="Urgent">Urgente</option>
                     <option value="Medium">Média</option>
@@ -387,10 +405,10 @@ export default function DashboardTab({
                   </select>
                   <button
                     type="submit"
-                    className="px-4 bg-slate-900 text-white rounded text-xs font-semibold hover:bg-slate-800 active:scale-95 transition-all h-11 sm:h-9 flex items-center justify-center gap-1 min-w-[44px]"
+                    className="px-3 bg-slate-900 text-white rounded text-xs font-semibold hover:bg-slate-800 active:scale-95 transition-all h-11 sm:h-9 flex items-center justify-center shrink-0 cursor-pointer"
+                    title="Adicionar Tarefa"
                   >
                     <span className="text-sm font-semibold">+</span>
-                    <span className="sm:hidden font-semibold">Adicionar</span>
                   </button>
                 </div>
               </div>
@@ -418,9 +436,20 @@ export default function DashboardTab({
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold leading-tight ${task.completed ? "line-through text-slate-400" : "text-slate-905"}`}>
-                        {task.title}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <p className={`text-xs font-bold leading-tight ${task.completed ? "line-through text-slate-400" : "text-slate-905"}`}>
+                          {task.title}
+                        </p>
+                        {task.value !== undefined && (
+                          <span className={`text-[10px] px-1.5 py-0.2 font-extrabold rounded-md border ${
+                            task.completed 
+                              ? "bg-slate-100 text-slate-400 border-slate-200"
+                              : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                          }`}>
+                            R$ {task.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-slate-500 mt-1 flex flex-wrap gap-1 items-center">
                         <span className="font-semibold text-slate-600">{task.associatedWith}</span>
                         <span className="text-slate-300">•</span>
