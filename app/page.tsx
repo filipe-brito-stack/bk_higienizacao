@@ -10,7 +10,6 @@ import {
   Settings, 
   Search, 
   Plus, 
-  Bell, 
   Sparkles,
   Menu,
   X,
@@ -282,8 +281,6 @@ export default function RootPage() {
 
   // Filter inactive trigger (from AI widget)
   const [filterInactiveOnly, setFilterInactiveOnly] = useState(false);
-
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // Handle client-side state hydration
   useEffect(() => {
@@ -793,38 +790,10 @@ export default function RootPage() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
-            {/* Notification and support quick buttons */}
-            <div className="flex items-center gap-0.5 sm:gap-1 relative">
-              <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="p-1.5 sm:p-2 hover:bg-slate-50 rounded-full text-slate-500 relative transition-colors cursor-pointer flex items-center justify-center"
-              >
-                <Bell className="w-4 h-4 text-slate-600" />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-600 rounded-full border border-white animate-pulse"></span>
-              </button>
-
-              {notificationsOpen && (
-                <div className="absolute right-0 top-10 bg-white border border-slate-200 shadow-2xl rounded-lg w-72 p-4 z-50 animate-fadeIn">
-                  <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-3 border-b pb-1">Notificações Recentes</span>
-                  <div className="space-y-3 max-h-56 overflow-y-auto">
-                    <div className="text-xs p-1">
-                      <p className="font-bold">Deal Fechado com Sucesso! 🚀</p>
-                      <p className="text-[10px] text-slate-550">Zenith Support Retainer faturou $525,000.</p>
-                    </div>
-                    <div className="text-xs p-1 border-t pt-1.5 border-dashed">
-                      <p className="font-bold">12 Leads Frios Detectados</p>
-                      <p className="text-[10px] text-slate-550">Utilize IA para gerar emails de reengajamento.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
-
             {/* Active profile card */}
             <div
               onClick={() => setCurrentTab("settings")}
-              className="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-[#eceef0] cursor-pointer hover:opacity-85"
+              className="flex items-center gap-2 cursor-pointer hover:opacity-85"
             >
               <img
                 src={profilePic}
