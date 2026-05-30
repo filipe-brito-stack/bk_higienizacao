@@ -229,36 +229,7 @@ const INITIAL_TASKS: Task[] = [
   }
 ];
 
-const INITIAL_ACTIVITIES: Activity[] = [
-  {
-    id: "a1",
-    type: "closed",
-    title: "Serviço Fechado: Projeto Aurora (R$ 42.000)",
-    sub: "Fechado por <b>Sarah Miller</b> • Há 2 horas",
-    time: "Há 2 horas"
-  },
-  {
-    id: "a2",
-    type: "email",
-    title: "E-mail Aberto: Proposta para Global Logistics Ltd",
-    sub: "Enviado por <b>Você</b> • Há 4 horas",
-    time: "Há 4 horas"
-  },
-  {
-    id: "a3",
-    type: "contact",
-    title: "Novo Cliente Adicionado: Robert Fox",
-    sub: "Empresa: <b>Atlas Group</b> • Há 6 horas",
-    time: "Há 6 horas"
-  },
-  {
-    id: "a4",
-    type: "call",
-    title: "Ligação Realizada: Acompanhamento com Cyberdyne",
-    sub: "Duração: 12m 40s • Ontem",
-    time: "Ontem"
-  }
-];
+const INITIAL_ACTIVITIES: Activity[] = [];
 
 const INITIAL_GOALS: CRMGoals = {
   monthlyRevenueTarget: 1500000,
@@ -345,7 +316,7 @@ export default function RootPage() {
         .select("*")
         .order("created_at", { ascending: false });
       if (actErr) throw actErr;
-      if (dbActivities && dbActivities.length > 0) {
+      if (dbActivities) {
         setActivities(dbActivities.map(mapActivityFromDB));
       }
 
@@ -545,7 +516,7 @@ export default function RootPage() {
             .from("activities")
             .select("*")
             .order("created_at", { ascending: false });
-          if (!actErr && dbActivities && dbActivities.length > 0) {
+          if (!actErr && dbActivities) {
             setActivities(dbActivities.map(mapActivityFromDB));
           }
 
