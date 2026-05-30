@@ -257,7 +257,25 @@ export default function DashboardTab({
   const currentMonthCustomers = contacts.filter((c) => c.status === "Customer").length;
   const customersProgressPct = Math.min(100, Math.round((currentMonthCustomers / customersTarget) * 100));
 
-  const leadScore = goals.leadQualityScore || 94;
+  // Dynamically calculate lead quality score based on lead profile completeness across all leads
+  const leadContacts = contacts.filter((c) => c.status === "Lead");
+  const calculatedLeadScore = leadContacts.length > 0
+    ? Math.round(
+        leadContacts.reduce((sum, c) => {
+          let score = 0;
+          if (c.email && c.email.trim() !== "") score += 20;
+          if (c.phone && c.phone.trim() !== "") score += 20;
+          if (c.company && c.company.trim() !== "") score += 20;
+          if (c.role && c.role.trim() !== "") score += 20;
+          if ((c.address && c.address.trim() !== "") || (c.latitude !== undefined && c.longitude !== undefined && c.latitude !== null && c.longitude !== null)) {
+            score += 20;
+          }
+          return sum + score;
+        }, 0) / leadContacts.length
+      )
+    : 105; // Fallback or perfect score when there are no leads
+
+  const leadScore = Math.min(100, Math.max(0, calculatedLeadScore));
 
   // Toggle tasks
   const handleToggleTask = (taskId: string) => {

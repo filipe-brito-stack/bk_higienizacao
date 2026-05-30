@@ -264,8 +264,30 @@ export default function RootPage() {
   const [goals, setGoals] = useState<CRMGoals>(INITIAL_GOALS);
 
   // Active user details
-  const [profileName, setProfileName] = useState("Bruno Kawaguchi");
+  const [profileName, setProfileNameState] = useState("Bruno Kawaguchi");
   const [profilePic, setProfilePic] = useState("/bruno_profile_pic.png");
+
+  const setProfileName = React.useCallback((name: string | ((prev: string) => string)) => {
+    const cleanName = (val: string): string => {
+      if (!val) return "Bruno Kawaguchi";
+      const lower = val.toLowerCase();
+      if (
+        lower.includes("bkhigienizacaodf") ||
+        lower.includes("bkhigienizacao") ||
+        lower === "bruno" ||
+        lower === "admin"
+      ) {
+        return "Bruno Kawaguchi";
+      }
+      return val;
+    };
+
+    if (typeof name === "function") {
+      setProfileNameState((prev) => cleanName(name(prev)));
+    } else {
+      setProfileNameState(cleanName(name));
+    }
+  }, []);
 
   // Filter inactive trigger (from AI widget)
   const [filterInactiveOnly, setFilterInactiveOnly] = useState(false);
@@ -1103,7 +1125,9 @@ export default function RootPage() {
                 className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[#c6c6cd]"
               />
               <div className="hidden lg:block">
-                <span className="font-extrabold text-xs text-black block leading-none">{profileName}</span>
+                <span className="font-extrabold text-xs text-black block leading-none">
+                  {profileName?.toLowerCase().includes("bkhigienizacaodf") || !profileName ? "Bruno Kawaguchi" : profileName}
+                </span>
                 <span className="text-[9px] text-slate-500 mt-0.5 block font-bold uppercase tracking-wider">Enterprise User</span>
               </div>
             </div>
