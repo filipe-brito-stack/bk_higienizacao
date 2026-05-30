@@ -199,12 +199,12 @@ export default function DashboardTab({
           </div>
           <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Total Recebido</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
-            R$ {totalRevenue.toLocaleString("pt-BR")}
+            R$ {formatBRL(totalRevenue)}
           </h2>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
         </div>
 
-        {/* Valor Gasto com Serviços */}
+        {/* Custo Operacional */}
         <div className="bg-white p-6 rounded-xl border border-outline-variant/40 shadow-sm relative overflow-hidden group">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-rose-50 text-rose-700 rounded-lg">
@@ -214,9 +214,9 @@ export default function DashboardTab({
               Despesa
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Gasto com Serviços</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Custo Operacional</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
-            R$ {totalCost.toLocaleString("pt-BR")}
+            R$ {formatBRL(totalCost)}
           </h2>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-rose-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
         </div>
@@ -233,7 +233,7 @@ export default function DashboardTab({
           </div>
           <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido Líquido</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
-            R$ {netProfit.toLocaleString("pt-BR")}
+            R$ {formatBRL(netProfit)}
           </h2>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-emerald-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
         </div>

@@ -17,7 +17,9 @@ import {
   User,
   LogOut,
   Eye,
-  EyeOff
+  EyeOff,
+  RefreshCw,
+  CheckCircle2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -27,6 +29,22 @@ import ContactsTab from "@/components/ContactsTab";
 import PipelineTab from "@/components/PipelineTab";
 import DealsTab from "@/components/DealsTab";
 import SettingsTab from "@/components/SettingsTab";
+
+// Import Supabase
+import { 
+  supabase,
+  mapContactFromDB,
+  mapContactToDB,
+  mapDealFromDB,
+  mapDealToDB,
+  mapTaskFromDB,
+  mapTaskToDB,
+  mapActivityFromDB,
+  mapActivityToDB,
+  mapGoalsFromDB,
+  mapGoalsToDB
+} from "@/lib/supabase";
+
 
 const INITIAL_CONTACTS: Contact[] = [
   {
@@ -264,6 +282,7 @@ export default function RootPage() {
   const [loginError, setLoginError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // CRM State databases
   const [mounted, setMounted] = useState(false);
@@ -274,18 +293,100 @@ export default function RootPage() {
   const [goals, setGoals] = useState<CRMGoals>(INITIAL_GOALS);
 
   // Active user details
-  const [profileName, setProfileName] = useState("Bruno");
-  const [profilePic, setProfilePic] = useState(
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCarguWrWz5TWuyV6J_UVDN5rwVyzWcZMTtr52bjn07D7M9xSdszI53dsc5UF585772DUC5tWmmbHW55R7ThXndO9RlF_e6oI6SyhTXr9W1yTbwdiUO9Bglwg74xc8lGjvrINyxai500AmXaOvTlxAZUwmPf5pvVLcdJu9oJoeJ78_a37zTkMzjS6e4M0nZMgHfm3kB6XFBkxL3rwY0QlUsbiRTcbIylcaywtB6k9EukHfT19o1-PZYQOeK-TLPzKcY6LLKx0-VKqg"
-  );
+  const [profileName, setProfileName] = useState("Bruno Kawaguchi");
+  const [profilePic, setProfilePic] = useState("/bruno_profile_pic.png");
 
   // Filter inactive trigger (from AI widget)
   const [filterInactiveOnly, setFilterInactiveOnly] = useState(false);
 
-  // Handle client-side state hydration
+  // Supabase Real-time Sync States
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<"connected" | "offline" | "error" | "idle">("idle");
+
+  const syncFromDatabase = async (silent = false) => {
+    if (!supabase) {
+      setSyncStatus("offline");
+      return;
+    }
+    
+    if (!silent) setIsSyncing(true);
+    
+    try {
+      // 1. Fetch contacts
+      const { data: dbContacts, error: contactsErr } = await supabase
+        .from("contacts")
+        .select("*");
+      if (contactsErr) throw contactsErr;
+      if (dbContacts && dbContacts.length > 0) {
+        setContacts(dbContacts.map(mapContactFromDB));
+      }
+
+      // 2. Fetch deals
+      const { data: dbDeals, error: dealsErr } = await supabase
+        .from("deals")
+        .select("*");
+      if (dealsErr) throw dealsErr;
+      if (dbDeals && dbDeals.length > 0) {
+        setDeals(dbDeals.map(mapDealFromDB));
+      }
+
+      // 3. Fetch tasks
+      const { data: dbTasks, error: tasksErr } = await supabase
+        .from("tasks")
+        .select("*");
+      if (tasksErr) throw tasksErr;
+      if (dbTasks && dbTasks.length > 0) {
+        setTasks(dbTasks.map(mapTaskFromDB));
+      }
+
+      // 4. Fetch activities
+      const { data: dbActivities, error: actErr } = await supabase
+        .from("activities")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (actErr) throw actErr;
+      if (dbActivities && dbActivities.length > 0) {
+        setActivities(dbActivities.map(mapActivityFromDB));
+      }
+
+      // 5. Fetch goals
+      const { data: dbGoals, error: goalsErr } = await supabase
+        .from("goals")
+        .select("*")
+        .eq("id", "singleton")
+        .maybeSingle();
+      if (goalsErr) throw goalsErr;
+      if (dbGoals) {
+        setGoals(mapGoalsFromDB(dbGoals));
+      }
+
+      // 6. Fetch profiles
+      const { data: dbProfile, error: profileErr } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", "bruno")
+        .maybeSingle();
+      if (profileErr) throw profileErr;
+      if (dbProfile) {
+        if (dbProfile.name) setProfileName(dbProfile.name);
+        if (dbProfile.avatar_url) setProfilePic(dbProfile.avatar_url);
+      }
+      
+      setSyncStatus("connected");
+    } catch (dbErr) {
+      console.error("Error loading updates from Supabase:", dbErr);
+      setSyncStatus("error");
+    } finally {
+      if (!silent) setIsSyncing(false);
+    }
+  };
+
+  // Handle client-side state hydration (LocalStorage + Supabase integration)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      /* eslint-disable react-hooks/set-state-in-effect */
+    async function initAndSyncData() {
+      if (typeof window === "undefined") return;
+
+      // 1. Initial LocalStorage hydration (gives instant UI load)
       try {
         const cachedContacts = localStorage.getItem("nexus_contacts");
         if (cachedContacts) {
@@ -390,14 +491,20 @@ export default function RootPage() {
 
       try {
         const cachedProfileName = localStorage.getItem("nexus_profile_name");
-        if (cachedProfileName) setProfileName(cachedProfileName);
+        if (cachedProfileName) {
+          setProfileName(cachedProfileName === "Bruno" ? "Bruno Kawaguchi" : cachedProfileName);
+        }
       } catch (e) {
         console.error("Error loading cached profile name", e);
       }
 
       try {
         const cachedProfilePic = localStorage.getItem("nexus_profile_pic");
-        if (cachedProfilePic) setProfilePic(cachedProfilePic);
+        if (cachedProfilePic && !cachedProfilePic.includes("lh3.googleusercontent.com") && !cachedProfilePic.includes("unavatar.io")) {
+          setProfilePic(cachedProfilePic);
+        } else {
+          setProfilePic("/bruno_profile_pic.png");
+        }
       } catch (e) {
         console.error("Error loading cached profile pic", e);
       }
@@ -408,46 +515,205 @@ export default function RootPage() {
       } catch (e) {
         console.error("Error loading cached auth state", e);
       }
-      /* eslint-enable react-hooks/set-state-in-effect */
+
+      // 2. Load fresh updates from Supabase if keys are configured
+      if (supabase) {
+        setIsSyncing(true);
+        try {
+          const { data: dbContacts, error: contactsErr } = await supabase
+            .from("contacts")
+            .select("*");
+          if (!contactsErr && dbContacts && dbContacts.length > 0) {
+            setContacts(dbContacts.map(mapContactFromDB));
+          }
+
+          const { data: dbDeals, error: dealsErr } = await supabase
+            .from("deals")
+            .select("*");
+          if (!dealsErr && dbDeals && dbDeals.length > 0) {
+            setDeals(dbDeals.map(mapDealFromDB));
+          }
+
+          const { data: dbTasks, error: tasksErr } = await supabase
+            .from("tasks")
+            .select("*");
+          if (!tasksErr && dbTasks && dbTasks.length > 0) {
+            setTasks(dbTasks.map(mapTaskFromDB));
+          }
+
+          const { data: dbActivities, error: actErr } = await supabase
+            .from("activities")
+            .select("*")
+            .order("created_at", { ascending: false });
+          if (!actErr && dbActivities && dbActivities.length > 0) {
+            setActivities(dbActivities.map(mapActivityFromDB));
+          }
+
+          const { data: dbGoals, error: goalsErr } = await supabase
+            .from("goals")
+            .select("*")
+            .eq("id", "singleton")
+            .maybeSingle();
+          if (!goalsErr && dbGoals) {
+            setGoals(mapGoalsFromDB(dbGoals));
+          }
+
+          const { data: dbProfile, error: profileErr } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", "bruno")
+            .maybeSingle();
+          if (!profileErr && dbProfile) {
+            if (dbProfile.name) setProfileName(dbProfile.name);
+            if (dbProfile.avatar_url) setProfilePic(dbProfile.avatar_url);
+          }
+          setSyncStatus("connected");
+        } catch (dbErr) {
+          console.error("Error fetching from Supabase on init:", dbErr);
+          setSyncStatus("error");
+        } finally {
+          setIsSyncing(false);
+        }
+      } else {
+        setSyncStatus("offline");
+      }
+
+      setMounted(true);
     }
-    setMounted(true);
+
+    initAndSyncData();
   }, []);
 
-  // Sync cache changes
+  // Sync cache changes to localStorage and Supabase online database
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_contacts", JSON.stringify(contacts));
-  }, [contacts, mounted]);
+
+    if (supabase) {
+      const dbRows = contacts.map(c => mapContactToDB(c));
+      if (dbRows.length > 0) {
+        supabase.from("contacts").upsert(dbRows).then(({ error }) => {
+          if (error) console.error("Error syncing contacts:", error);
+        });
+      }
+      
+      const currentIds = contacts.map(c => c.id).filter(Boolean);
+      if (currentIds.length > 0) {
+        supabase.from("contacts").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+          if (error) console.error("Error pruning remote contacts:", error);
+        });
+      } else {
+        supabase.from("contacts").delete().neq("id", "").then(({ error }) => {
+          if (error) console.error("Error pruning all remote contacts:", error);
+        });
+      }
+    }
+  }, [contacts, mounted, isSyncing]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_deals", JSON.stringify(deals));
-  }, [deals, mounted]);
+
+    if (supabase) {
+      const dbRows = deals.map(d => mapDealToDB(d));
+      if (dbRows.length > 0) {
+        supabase.from("deals").upsert(dbRows).then(({ error }) => {
+          if (error) console.error("Error syncing deals:", error);
+        });
+      }
+      
+      const currentIds = deals.map(d => d.id).filter(Boolean);
+      if (currentIds.length > 0) {
+        supabase.from("deals").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+          if (error) console.error("Error pruning remote deals:", error);
+        });
+      } else {
+        supabase.from("deals").delete().neq("id", "").then(({ error }) => {
+          if (error) console.error("Error pruning all remote deals:", error);
+        });
+      }
+    }
+  }, [deals, mounted, isSyncing]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_tasks", JSON.stringify(tasks));
-  }, [tasks, mounted]);
+
+    if (supabase) {
+      const dbRows = tasks.map(t => mapTaskToDB(t));
+      if (dbRows.length > 0) {
+        supabase.from("tasks").upsert(dbRows).then(({ error }) => {
+          if (error) console.error("Error syncing tasks:", error);
+        });
+      }
+      
+      const currentIds = tasks.map(t => t.id).filter(Boolean);
+      if (currentIds.length > 0) {
+        supabase.from("tasks").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+          if (error) console.error("Error pruning remote tasks:", error);
+        });
+      } else {
+        supabase.from("tasks").delete().neq("id", "").then(({ error }) => {
+          if (error) console.error("Error pruning all remote tasks:", error);
+        });
+      }
+    }
+  }, [tasks, mounted, isSyncing]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_activities", JSON.stringify(activities));
-  }, [activities, mounted]);
+
+    if (supabase) {
+      const dbRows = activities.map(a => mapActivityToDB(a));
+      if (dbRows.length > 0) {
+        supabase.from("activities").upsert(dbRows).then(({ error }) => {
+          if (error) console.error("Error syncing activities:", error);
+        });
+      }
+      
+      const currentIds = activities.map(a => a.id).filter(Boolean);
+      if (currentIds.length > 0) {
+        supabase.from("activities").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+          if (error) console.error("Error pruning remote activities:", error);
+        });
+      } else {
+        supabase.from("activities").delete().neq("id", "").then(({ error }) => {
+          if (error) console.error("Error pruning all remote activities:", error);
+        });
+      }
+    }
+  }, [activities, mounted, isSyncing]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_goals", JSON.stringify(goals));
-  }, [goals, mounted]);
+
+    if (supabase) {
+      const dbRow = mapGoalsToDB(goals);
+      supabase.from("goals").upsert([dbRow]).then(({ error }) => {
+        if (error) console.error("Error syncing goals:", error);
+      });
+    }
+  }, [goals, mounted, isSyncing]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_profile_name", profileName);
-  }, [profileName, mounted]);
-
-  useEffect(() => {
-    if (!mounted) return;
     localStorage.setItem("nexus_profile_pic", profilePic);
-  }, [profilePic, mounted]);
+
+    if (supabase) {
+      supabase.from("profiles").upsert({
+        id: "bruno",
+        name: profileName,
+        avatar_url: profilePic,
+        updated_at: new Date().toISOString()
+      }).then(({ error }) => {
+        if (error) console.error("Error syncing profile:", error);
+      });
+    }
+  }, [profileName, profilePic, mounted, isSyncing]);
+
 
   // Execute review list click function on dashboard
   const handleReviewInactiveLeadsClick = () => {
@@ -459,10 +725,10 @@ export default function RootPage() {
     setFilterInactiveOnly(false);
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!usernameInput.trim()) {
-      setLoginError("Por favor, insira seu usuário.");
+      setLoginError("Por favor, insira seu e-mail ou usuário.");
       return;
     }
     if (!passwordInput.trim()) {
@@ -470,21 +736,64 @@ export default function RootPage() {
       return;
     }
     
+    setIsLoggingIn(true);
+    setLoginError("");
+    
     const lowerUser = usernameInput.trim().toLowerCase();
+    
+    // 1. Try master offline/local fallback credentials first
     if (
       (lowerUser === "bruno" && passwordInput === "bk1234") ||
       (lowerUser === "admin" && passwordInput === "admin")
     ) {
-      const formattedName = usernameInput.trim().toLowerCase() === "bruno" ? "Bruno" : usernameInput.trim();
+      const formattedName = usernameInput.trim().toLowerCase() === "bruno" ? "Bruno Kawaguchi" : usernameInput.trim();
       setProfileName(formattedName);
       setIsAuthenticated(true);
       setLoginError("");
+      setIsLoggingIn(false);
       if (rememberMe) {
         localStorage.setItem("nexus_logged_in", "true");
         localStorage.setItem("nexus_profile_name", formattedName);
       }
+      return;
+    }
+
+    // 2. Otherwise authenticate using Supabase Authentication!
+    if (supabase) {
+      try {
+        const email = usernameInput.includes("@") ? usernameInput.trim() : `${usernameInput.trim()}@company.com`;
+        
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: passwordInput,
+        });
+
+        if (error) {
+          setLoginError(`Erro de autenticação: ${error.message}`);
+          setIsLoggingIn(false);
+          return;
+        }
+
+        if (data?.user) {
+          const userEmail = data.user.email || "";
+          const displayName = data.user.user_metadata?.full_name || data.user.user_metadata?.name || userEmail.split("@")[0];
+          
+          setProfileName(displayName);
+          setIsAuthenticated(true);
+          setLoginError("");
+          setIsLoggingIn(false);
+          if (rememberMe) {
+            localStorage.setItem("nexus_logged_in", "true");
+            localStorage.setItem("nexus_profile_name", displayName);
+          }
+        }
+      } catch (err: any) {
+        setLoginError(`Erro de conexão com o Supabase: ${err.message || err}`);
+        setIsLoggingIn(false);
+      }
     } else {
-      setLoginError("Usuário ou senha inválidos. Dica: bruno / bk1234.");
+      setLoginError("Credenciais inválidas ou serviço Supabase offline.");
+      setIsLoggingIn(false);
     }
   };
 
@@ -541,7 +850,7 @@ export default function RootPage() {
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5 pl-0.5">
-                Usuário
+                Usuário / E-mail
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -550,7 +859,7 @@ export default function RootPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Seu usuário (Ex: bruno)"
+                  placeholder="Seu e-mail ou usuário (Ex: bruno)"
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                   className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/40 border border-slate-700/60 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-800/70 transition-all font-medium h-11"
@@ -561,7 +870,7 @@ export default function RootPage() {
             <div>
               <div className="flex justify-between items-center mb-1.5 pl-0.5">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Senha Geral
+                  Senha Geral / Pessoal
                 </label>
               </div>
               <div className="relative">
@@ -618,22 +927,21 @@ export default function RootPage() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-extrabold rounded-xl transition-all shadow-lg shadow-blue-600/10 hover:shadow-blue-600/20 flex items-center justify-center gap-2 mt-4 text-xs tracking-wider uppercase cursor-pointer"
+              disabled={isLoggingIn}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.99] disabled:opacity-70 disabled:pointer-events-none text-white font-extrabold rounded-xl transition-all shadow-lg shadow-blue-600/10 hover:shadow-blue-600/20 flex items-center justify-center gap-2 mt-4 text-xs tracking-wider uppercase cursor-pointer"
             >
-              Acessar Painel administrativo
+              {isLoggingIn ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Autenticando...</span>
+                </>
+              ) : (
+                "Acessar Painel administrativo"
+              )}
             </button>
           </form>
 
-          {/* Quick Access Helper hint box */}
-          <div className="mt-8 pt-5 border-t border-slate-800/60 text-center">
-            <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-widest block mb-2">
-              Acesso de Produção
-            </span>
-            <div className="bg-slate-800/40 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 leading-normal inline-block w-full">
-              Dica: Utilize o administrador principal <br />
-              Usuário: <strong className="text-blue-400">bruno</strong> e Senha: <strong className="text-blue-400">bk1234</strong>
-            </div>
-          </div>
+
         </motion.div>
       </div>
     );
@@ -790,6 +1098,29 @@ export default function RootPage() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
+            {/* Supabase Force Sync Button */}
+            {mounted && (
+              <button
+                onClick={() => syncFromDatabase(false)}
+                disabled={isSyncing}
+                title="Sincronizar e carregar dados do banco de dados Supabase"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold tracking-tight uppercase transition-all ${
+                  isSyncing
+                    ? "bg-amber-50 border-amber-200 text-amber-600 cursor-wait animate-pulse"
+                    : syncStatus === "connected"
+                    ? "bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/50"
+                    : syncStatus === "error"
+                    ? "bg-rose-50 border-rose-100 text-rose-700 hover:bg-rose-100/50"
+                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                } shadow-xs cursor-pointer active:scale-95`}
+              >
+                <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
+                <span>
+                  {isSyncing ? "Puxando..." : syncStatus === "connected" ? "Atualizar Banco" : syncStatus === "error" ? "Erro" : "Puxar Banco"}
+                </span>
+              </button>
+            )}
+
             {/* Active profile card */}
             <div
               onClick={() => setCurrentTab("settings")}

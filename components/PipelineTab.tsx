@@ -37,6 +37,13 @@ function formatToBRL(value: string): string {
   });
 }
 
+function formatBRLValue(value: number): string {
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default function PipelineTab({ deals, setDeals, setActivities, contacts = [] }: PipelineTabProps) {
   const [showAddDeal, setShowAddDeal] = useState(false);
   const [activeStageFilter, setActiveStageFilter] = useState<Deal["stage"] | "Todos">("Todos");
@@ -115,7 +122,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       id: generateActivityId(dealId, `move_${updatedStage}`),
       type: updatedStage === "Realizado" ? "closed" : "contact",
       title: `Estágio alterado: ${deal.serviceDescription}`,
-      sub: `Progresso: ${deal.stage} → <b>${updatedStage}</b> (R$ ${deal.value.toLocaleString("pt-BR")})`,
+      sub: `Progresso: ${deal.stage} → <b>${updatedStage}</b> (R$ ${formatBRLValue(deal.value)})`,
       time: "Agora mesmo",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
@@ -149,7 +156,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       id: generateActivityId(createdId, "add"),
       type: "contact",
       title: `Serviço cadastrado: ${createdDeal.serviceDescription}`,
-      sub: `Cliente: ${createdDeal.clientName} | Estágio: ${createdDeal.stage} | Valor: R$ ${createdDeal.value.toLocaleString("pt-BR")}`,
+      sub: `Cliente: ${createdDeal.clientName} | Estágio: ${createdDeal.stage} | Valor: R$ ${formatBRLValue(createdDeal.value)}`,
       time: "Agora mesmo",
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
@@ -248,7 +255,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
                 </div>
                 {/* Capital Sum aggregate */}
                 <div className="text-[11px] font-bold text-outline uppercase tracking-wider mb-3 px-1 text-right border-b border-dashed border-slate-200 pb-1.5">
-                  Total: <span className="text-on-surface font-semibold">R$ {totalSum.toLocaleString("pt-BR")}</span>
+                  Total: <span className="text-on-surface font-semibold">R$ {formatBRLValue(totalSum)}</span>
                 </div>
 
                 {/* Items wrapper */}
@@ -269,16 +276,16 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
                       <div className="mt-3 pt-2 border-t border-slate-100 flex flex-col gap-1 text-[11px]">
                         <div className="flex justify-between font-medium">
                           <span className="text-slate-500">Valor Cobrado:</span>
-                          <span className="font-extrabold text-emerald-700">R$ {deal.value.toLocaleString("pt-BR")}</span>
+                          <span className="font-extrabold text-emerald-700">R$ {formatBRLValue(deal.value)}</span>
                         </div>
                         <div className="flex justify-between font-medium">
                           <span className="text-slate-500">Gasto p/ Realizar:</span>
-                          <span className="font-semibold text-rose-600">R$ {deal.cost.toLocaleString("pt-BR")}</span>
+                          <span className="font-semibold text-rose-600">R$ {formatBRLValue(deal.cost)}</span>
                         </div>
                         <div className="flex justify-between font-medium border-t border-dotted border-slate-200 pt-1">
                           <span className="text-slate-500">Saldo Líquido:</span>
                           <span className={`font-extrabold ${(deal.value - deal.cost) >= 0 ? "text-slate-800" : "text-rose-700"}`}>
-                            R$ {(deal.value - deal.cost).toLocaleString("pt-BR")}
+                            R$ {formatBRLValue(deal.value - deal.cost)}
                           </span>
                         </div>
                         <div className="flex justify-between text-[9px] text-slate-400 mt-1">

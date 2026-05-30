@@ -224,16 +224,19 @@ export default function DealsTab({
     .reduce((sum, task) => sum + (task.value || 0), 0);
 
   const handleSaveEdit = (dealId: string) => {
-    const valueNum = parseFloat(editPrice.replace(/[^0-9.]/g, "")) || 0;
-    const costNum = parseFloat(editCost.replace(/[^0-9.]/g, "")) || 0;
+    const cleanPrice = editPrice.replace(/[^\d,]/g, "").replace(",", ".");
+    const valueNum = parseFloat(cleanPrice);
+
+    const cleanCost = editCost.replace(/[^\d,]/g, "").replace(",", ".");
+    const costNum = parseFloat(cleanCost);
 
     setDeals((prev) =>
       prev.map((d) => {
         if (d.id !== dealId) return d;
         return {
           ...d,
-          value: valueNum >= 0 ? valueNum : d.value,
-          cost: costNum >= 0 ? costNum : d.cost,
+          value: !isNaN(valueNum) && valueNum >= 0 ? valueNum : d.value,
+          cost: !isNaN(costNum) && costNum >= 0 ? costNum : d.cost,
           serviceDescription: editDescription.trim() !== "" ? editDescription : d.serviceDescription
         };
       })
@@ -243,8 +246,8 @@ export default function DealsTab({
 
   const startEdit = (deal: Deal) => {
     setEditingDealId(deal.id);
-    setEditPrice(deal.value.toString());
-    setEditCost(deal.cost.toString());
+    setEditPrice(formatBRL(deal.value));
+    setEditCost(formatBRL(deal.cost));
     setEditDescription(deal.serviceDescription);
   };
 
@@ -260,25 +263,25 @@ export default function DealsTab({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Faturamento Total</span>
-          <h3 className="text-xl font-black text-slate-900">R$ {totalPipelineVal.toLocaleString("pt-BR")}</h3>
+          <h3 className="text-xl font-black text-slate-900">R$ {formatBRL(totalPipelineVal)}</h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Soma de todos os serviços propostos, agendados e realizados.</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Custo Operacional</span>
-          <h3 className="text-xl font-black text-rose-600">R$ {totalCostVal.toLocaleString("pt-BR")}</h3>
+          <h3 className="text-xl font-black text-rose-600">R$ {formatBRL(totalCostVal)}</h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Soma dos gastos para realização de serviços.</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Lucro Líquido</span>
           <h3 className={`text-xl font-black ${totalNetProfit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
-            R$ {totalNetProfit.toLocaleString("pt-BR")}
+            R$ {formatBRL(totalNetProfit)}
           </h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Saldo real líquido ({wonCount} concluídos com sucesso).</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-outline-variant/35 shadow-xs">
           <span className="text-[10px] font-bold text-outline uppercase block tracking-wider mb-1">Custo de Manutenção</span>
           <h3 className="text-xl font-black text-indigo-600">
-            R$ {tasksOperationalCost.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            R$ {formatBRL(tasksOperationalCost)}
           </h3>
           <p className="text-[10px] text-on-surface-variant mt-1">Soma das tarefas comerciais concluídas no mês atual.</p>
         </div>
@@ -326,11 +329,11 @@ export default function DealsTab({
                         <input
                           type="text"
                           value={editPrice}
-                          onChange={(e) => setEditPrice(e.target.value)}
-                          className="bg-white border rounded px-2 py-1 w-20 text-right text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
+                          onChange={(e) => setEditPrice(formatBRL(e.target.value))}
+                          className="bg-white border border-slate-200 rounded px-2 py-1 w-28 text-right text-xs font-extrabold focus:ring-1 focus:ring-slate-900 outline-none"
                         />
                       ) : (
-                        <span className="font-extrabold text-slate-850">R$ {deal.value.toLocaleString("pt-BR")}</span>
+                        <span className="font-extrabold text-slate-850">R$ {formatBRL(deal.value)}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -338,15 +341,15 @@ export default function DealsTab({
                         <input
                           type="text"
                           value={editCost}
-                          onChange={(e) => setEditCost(e.target.value)}
-                          className="bg-white border rounded px-2 py-1 w-20 text-right text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
+                          onChange={(e) => setEditCost(formatBRL(e.target.value))}
+                          className="bg-white border border-slate-200 rounded px-2 py-1 w-28 text-right text-xs font-extrabold focus:ring-1 focus:ring-slate-900 outline-none"
                         />
                       ) : (
-                        <span className="font-semibold text-rose-600">R$ {deal.cost.toLocaleString("pt-BR")}</span>
+                        <span className="font-semibold text-rose-600">R$ {formatBRL(deal.cost)}</span>
                       )}
                     </td>
                     <td className={`px-6 py-4 text-right font-bold ${netProfit >= 0 ? "text-slate-800" : "text-rose-750"}`}>
-                      R$ {netProfit.toLocaleString("pt-BR")}
+                      R$ {formatBRL(netProfit)}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -437,11 +440,11 @@ export default function DealsTab({
                       <input
                         type="text"
                         value={editPrice}
-                        onChange={(e) => setEditPrice(e.target.value)}
+                        onChange={(e) => setEditPrice(formatBRL(e.target.value))}
                         className="bg-white border border-slate-200 rounded text-center text-[10px] py-1 w-full focus:ring-1 focus:ring-slate-900 outline-none font-bold"
                       />
                     ) : (
-                      <span className="text-slate-900 font-extrabold text-[11px]">R$ {deal.value.toLocaleString("pt-BR")}</span>
+                      <span className="text-slate-900 font-extrabold text-[11px]">R$ {formatBRL(deal.value)}</span>
                     )}
                   </div>
                   <div className="bg-slate-50/50 p-2 rounded flex flex-col justify-center border border-slate-100">
@@ -450,17 +453,17 @@ export default function DealsTab({
                       <input
                         type="text"
                         value={editCost}
-                        onChange={(e) => setEditCost(e.target.value)}
+                        onChange={(e) => setEditCost(formatBRL(e.target.value))}
                         className="bg-white border border-slate-200 rounded text-center text-[10px] py-1 w-full focus:ring-1 focus:ring-slate-900 outline-none font-bold"
                       />
                     ) : (
-                      <span className="text-rose-600 text-[11px]">R$ {deal.cost.toLocaleString("pt-BR")}</span>
+                      <span className="text-rose-600 text-[11px]">R$ {formatBRL(deal.cost)}</span>
                     )}
                   </div>
                   <div className="bg-slate-50/50 p-2 rounded flex flex-col justify-center border border-slate-100">
                     <span className="text-slate-400 block font-extrabold uppercase tracking-wider text-[7px] mb-0.5">Líquido</span>
                     <span className={`text-[11px] font-extrabold ${netProfit >= 0 ? "text-emerald-700" : "text-rose-750"}`}>
-                      R$ {netProfit.toLocaleString("pt-BR")}
+                      R$ {formatBRL(netProfit)}
                     </span>
                   </div>
                 </div>
