@@ -21,7 +21,6 @@ export default function ContactsTab({
 }: ContactsTabProps) {
   // Search & Basic Filter States
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | "Customer" | "Lead">("Customer");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -29,11 +28,7 @@ export default function ContactsTab({
   const [showAddModal, setShowAddModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newCompany, setNewCompany] = useState("");
-  const [newRole, setNewRole] = useState("");
-  const [newStatus, setNewStatus] = useState<"Customer" | "Lead">("Customer");
   const [newPhone, setNewPhone] = useState("");
-  const [newAvatarUrl, setNewAvatarUrl] = useState("");
   const [newBirthMonth, setNewBirthMonth ] = useState("");
   const [newBirthYear, setNewBirthYear] = useState("");
   const [birthDateInput, setBirthDateInput] = useState("");
@@ -87,21 +82,11 @@ export default function ContactsTab({
 
 
 
-  // Predefined professional avatar CDN presets
-  const AVATAR_PRESETS = [
-    { name: "Executive 1 (Mockup Default 1)", url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCarguWrWz5TWuyV6J_UVDN5rwVyzWcZMTtr52bjn07D7M9xSdszI53dsc5UF585772DUC5tWmmbHW55R7ThXndO9RlF_e6oI6SyhTXr9W1yTbwdiUO9Bglwg74xc8lGjvrINyxai500AmXaOvTlxAZUwmPf5pvVLcdJu9oJoeJ78_a37zTkMzjS6e4M0nZMgHfm3kB6XFBkxL3rwY0QlUsbiRTcbIylcaywtB6k9EukHfT19o1-PZYQOeK-TLPzKcY6LLKx0-VKqg" },
-    { name: "Executive 2 (Mockup Default 2)", url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBMzDxcw3E8i9B8dw3x535fnmjuUd0cwm7y5QHCMpSmqVaKWPjW4T89mjRqi_R91t3WoKpNsx90j19uGNnM74LsuzeXzvFWt5O5ElcPAUrZ9IkRm6q8zP8NL300z8eIlu6GR8ObbX7eVunGyMfJ1gLYoFnIUL0QizMN7SpFJT4h8LVHzo5g7nkioGrEjeMG_VOjEA_G6fA56gSi8LrLP6y7wCn1jaNi4eC4QVoVmldIXmesJBor_U1pUPWp6bJUgg81gKLKvm5mqmQ" },
-    { name: "Male executive blue suit", url: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&auto=format&fit=crop&q=80" },
-    { name: "Female advisor corporate", url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80" },
-  ];
-
   // Filters logic
   const filteredContacts = contacts.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === "All" || c.status === statusFilter;
 
     // Filter by inactive if requested from the AI panel
     const matchesInactive = !filterInactiveOnly || 
@@ -110,7 +95,7 @@ export default function ContactsTab({
       c.lastContact.toLowerCase().includes("days") || 
       c.lastContact.toLowerCase().includes("dias");
 
-    return matchesSearch && matchesStatus && matchesInactive;
+    return matchesSearch && matchesInactive;
   });
 
   // Pagination logic
@@ -182,13 +167,8 @@ export default function ContactsTab({
       id: Math.random().toString(),
       name: newName,
       email: newEmail,
-      company: "",
-      role: "",
-      status: newStatus,
       lastContact: "Recém adicionado",
-      avatarUrl: newAvatarUrl || AVATAR_PRESETS[2].url,
       phone: newPhone || "+1 (555) 000-0000",
-      owner: "Eu",
       birthMonth: newBirthMonth || undefined,
       birthYear: newBirthYear || undefined,
       address: newAddress || undefined,
@@ -211,10 +191,7 @@ export default function ContactsTab({
     // Reset Creation Fields
     setNewName("");
     setNewEmail("");
-    setNewCompany("");
-    setNewRole("");
     setNewPhone("");
-    setNewAvatarUrl("");
     setNewBirthMonth("");
     setNewBirthYear("");
     setNewAddress("");
@@ -249,7 +226,7 @@ export default function ContactsTab({
       id: Math.random().toString(),
       type: "contact",
       title: `Perfil do Cliente Modificado: ${editableContact.name}`,
-      sub: `Links diretos de avatar e parâmetros sincronizados`,
+      sub: `Parâmetros e contatos sincronizados`,
       time: "Agora mesmo",
     };
     setActivities((prev) => [newActivity, ...prev]);
@@ -338,7 +315,7 @@ export default function ContactsTab({
         <div className="flex items-center gap-3 text-xs justify-between md:justify-end">
           <span className="text-on-surface-variant font-medium">{filteredContacts.length} clientes encontrados</span>
           <button
-            onClick={() => { setSearchTerm(""); setStatusFilter("Customer"); clearFilters(); }}
+            onClick={() => { setSearchTerm(""); clearFilters(); }}
             className="text-blue-600 font-semibold hover:underline"
           >
             Limpar Filtros
@@ -369,13 +346,6 @@ export default function ContactsTab({
                 </tr>
               ) : (
                 paginatedContacts.map((contact, index) => {
-                  const avatarInitials = contact.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
-
                   return (
                      <tr key={contact.id} className="hover:bg-slate-50/70 transition-colors group">
                       <td className="px-6 py-4">
@@ -451,11 +421,7 @@ export default function ContactsTab({
                     </span>
                     <span className="text-[10px] text-slate-400 mt-0.5 block">{contact.email}</span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                    contact.status === "Customer" ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700"
-                  }`}>
-                    {contact.status === "Customer" ? "Cliente" : "Lead"}
-                  </span>
+                  {/* Status badge removed */}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500 pt-1 font-medium border-t border-slate-50">

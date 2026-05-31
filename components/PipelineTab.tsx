@@ -12,6 +12,41 @@ interface PipelineTabProps {
 
 const STAGES: Deal["stage"][] = ["Proposta", "Agendado", "Realizado"];
 
+function isCurrentMonth(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1-12
+  
+  const paddedMonth = month.toString().padStart(2, "0");
+  const clean = dateStr.trim();
+  const lower = clean.toLowerCase();
+  
+  if (
+    lower.includes("hoje") ||
+    lower.includes("amanhã") ||
+    lower.includes("today") ||
+    lower.includes("tomorrow") ||
+    lower.includes("em 2 dias") ||
+    lower.includes("em 3 dias") ||
+    lower.includes("próxima semana") ||
+    lower.includes("next week")
+  ) {
+    return true;
+  }
+  
+  if (clean.startsWith(`${year}-${paddedMonth}`)) {
+    return true;
+  }
+  
+  const brSuffix = `/${paddedMonth}/${year}`;
+  if (clean.includes(brSuffix)) {
+    return true;
+  }
+  
+  return false;
+}
+
 // Module-level helpers to generate identifiers.
 // Keeping these outside of the React component prevents ESLint purity/render complaints.
 function generateDealId(clientName: string, count: number): string {
@@ -91,7 +126,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
   // Calculations of capital sums per stage
   const getStageTotal = (stage: Deal["stage"]) => {
     return deals
-      .filter((d: Deal) => d.stage === stage)
+      .filter((d: Deal) => d.stage === stage && (stage !== "Realizado" || isCurrentMonth(d.date)))
       .reduce((sum, d) => sum + d.value, 0);
   };
 
@@ -233,7 +268,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       {/* Kanban Stages Grid viewport */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-4">
         {STAGES.filter((stage) => activeStageFilter === "Todos" || activeStageFilter === stage).map((stage) => {
-          const stageDeals = deals.filter((d) => d.stage === stage);
+          const stageDeals = deals.filter((d) => d.stage === stage && (stage !== "Realizado" || isCurrentMonth(d.date)));
           const totalSum = getStageTotal(stage);
 
           // Customize colors for headers representing progression
@@ -416,7 +451,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
                         className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 font-medium border-b border-slate-100 last:border-b-0 cursor-pointer flex flex-col"
                       >
                         <span className="font-bold">{contact.name}</span>
-                        <span className="text-[10px] text-slate-400">{contact.company || contact.email}</span>
+                        <span className="text-[10px] text-slate-400">{contact.email}</span>
                       </button>
                     ))}
                     {filteredContacts.length === 0 && (

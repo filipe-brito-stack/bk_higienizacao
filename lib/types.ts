@@ -2,13 +2,8 @@ export interface Contact {
   id: string;
   name: string;
   email: string;
-  company: string;
-  role: string;
-  status: "Customer" | "Lead";
   lastContact: string;
-  avatarUrl?: string;
   phone: string;
-  owner: string;
   birthMonth?: string;
   birthYear?: string;
   address?: string;

@@ -14,13 +14,8 @@ export function mapContactFromDB(row: any): Contact {
     id: row.id,
     name: row.name,
     email: row.email || "",
-    company: row.company || "",
-    role: row.role || "",
-    status: row.status === "Customer" ? "Customer" : "Lead",
     lastContact: row.last_contact || "Há pouco tempo",
-    avatarUrl: row.avatar_url || undefined,
     phone: row.phone || "",
-    owner: row.owner || "",
     birthMonth: row.birth_month || undefined,
     birthYear: row.birth_year || undefined,
     address: row.address || undefined,
@@ -34,13 +29,8 @@ export function mapContactToDB(contact: Partial<Contact>): any {
   if (contact.id !== undefined) row.id = contact.id;
   if (contact.name !== undefined) row.name = contact.name;
   if (contact.email !== undefined) row.email = contact.email;
-  if (contact.company !== undefined) row.company = contact.company;
-  if (contact.role !== undefined) row.role = contact.role;
-  if (contact.status !== undefined) row.status = contact.status;
   if (contact.lastContact !== undefined) row.last_contact = contact.lastContact;
-  if (contact.avatarUrl !== undefined) row.avatar_url = contact.avatarUrl;
   if (contact.phone !== undefined) row.phone = contact.phone;
-  if (contact.owner !== undefined) row.owner = contact.owner;
   if (contact.birthMonth !== undefined) row.birth_month = contact.birthMonth;
   if (contact.birthYear !== undefined) row.birth_year = contact.birthYear;
   if (contact.address !== undefined) row.address = contact.address;

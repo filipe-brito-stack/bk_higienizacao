@@ -229,19 +229,19 @@ export default function DashboardTab({
     label: "Faturamento Projetado"
   } : null);
 
-  // Dynamic calculations
+  // Dynamic calculations - filtered by current month as requested
   const totalRevenue = deals
-    .filter((d) => d.stage === "Realizado")
+    .filter((d) => isCurrentMonth(d.date) && d.stage === "Realizado")
     .reduce((sum, d) => sum + d.value, 0);
 
   const totalCost = deals
-    .filter((d) => d.stage === "Realizado")
+    .filter((d) => isCurrentMonth(d.date) && d.stage === "Realizado")
     .reduce((sum, d) => sum + d.cost, 0);
 
   const netProfit = totalRevenue - totalCost;
 
   const activeDealsCount = deals.filter(
-    (d) => d.stage !== "Realizado"
+    (d) => isCurrentMonth(d.date) && d.stage !== "Realizado"
   ).length;
 
   const urgentTasksCount = tasks.filter((t) => !t.completed && t.priority === "Urgent").length;
@@ -254,26 +254,23 @@ export default function DashboardTab({
   const revenueProgressPct = Math.min(100, Math.round((currentMonthRevenueReached / revenueTarget) * 100));
 
   const customersTarget = goals.newCustomersTarget || 200;
-  const currentMonthCustomers = contacts.filter((c) => c.status === "Customer").length;
+  const currentMonthCustomers = contacts.length;
   const customersProgressPct = Math.min(100, Math.round((currentMonthCustomers / customersTarget) * 100));
 
-  // Dynamically calculate lead quality score based on lead profile completeness across all leads
-  const leadContacts = contacts.filter((c) => c.status === "Lead");
-  const calculatedLeadScore = leadContacts.length > 0
+  // Dynamically calculate lead quality score based on contact profile completeness across all contacts
+  const calculatedLeadScore = contacts.length > 0
     ? Math.round(
-        leadContacts.reduce((sum, c) => {
+        contacts.reduce((sum, c) => {
           let score = 0;
-          if (c.email && c.email.trim() !== "") score += 20;
-          if (c.phone && c.phone.trim() !== "") score += 20;
-          if (c.company && c.company.trim() !== "") score += 20;
-          if (c.role && c.role.trim() !== "") score += 20;
+          if (c.email && c.email.trim() !== "") score += 33;
+          if (c.phone && c.phone.trim() !== "") score += 33;
           if ((c.address && c.address.trim() !== "") || (c.latitude !== undefined && c.longitude !== undefined && c.latitude !== null && c.longitude !== null)) {
-            score += 20;
+            score += 34;
           }
           return sum + score;
-        }, 0) / leadContacts.length
+        }, 0) / contacts.length
       )
-    : 105; // Fallback or perfect score when there are no leads
+    : 100;
 
   const leadScore = Math.min(100, Math.max(0, calculatedLeadScore));
 
@@ -375,10 +372,10 @@ export default function DashboardTab({
             </div>
             <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
               <TrendingUp className="w-3.5 h-3.5" />
-              Ativo
+              Este Mês
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Total Recebido</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido (Mês Atual)</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
             R$ {formatBRL(totalRevenue)}
           </h2>
@@ -392,10 +389,10 @@ export default function DashboardTab({
               <TrendingDown className="w-5 h-5" />
             </div>
             <span className="text-rose-700 bg-rose-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-              Despesa
+              Custo do Mês
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Custo Operacional</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Custo Operacional (Mês Atual)</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
             R$ {formatBRL(totalCost)}
           </h2>
@@ -409,10 +406,10 @@ export default function DashboardTab({
               <TrendingUp className="w-5 h-5" />
             </div>
             <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-              Resultado
+              Lucro do Mês
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido Líquido</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido Líquido (Mês Atual)</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
             R$ {formatBRL(netProfit)}
           </h2>
@@ -426,10 +423,10 @@ export default function DashboardTab({
               <Briefcase className="w-5 h-5" />
             </div>
             <span className="text-amber-700 bg-amber-50 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-              Pipeline
+              Ativos do Mês
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Serviços ativos</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Serviços ativos (Mês Atual)</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">{activeDealsCount}</h2>
         </div>
       </section>

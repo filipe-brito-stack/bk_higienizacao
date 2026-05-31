@@ -17,13 +17,8 @@ CREATE TABLE IF NOT EXISTS public.contacts (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT,
-    company TEXT,
-    role TEXT,
-    status TEXT NOT NULL CHECK (status IN ('Customer', 'Lead')),
     last_contact TEXT,
     phone TEXT,
-    owner TEXT,
-    avatar_url TEXT,
     birth_month TEXT,
     birth_year TEXT,
     address TEXT,
@@ -84,7 +79,6 @@ CREATE TABLE IF NOT EXISTS public.goals (
 );
 
 -- 8. Indexes for Optimized Reads
-CREATE INDEX IF NOT EXISTS idx_contacts_status ON public.contacts(status);
 CREATE INDEX IF NOT EXISTS idx_deals_stage ON public.deals(stage);
 CREATE INDEX IF NOT EXISTS idx_tasks_completed ON public.tasks(completed);
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON public.tasks(due_date);
@@ -120,13 +114,10 @@ VALUES ('singleton', 10000, 4600, 8, 3, 94)
 ON CONFLICT (id) DO NOTHING;
 
 -- Contacts
-INSERT INTO public.contacts (id, name, email, company, role, status, last_contact, phone, owner, avatar_url)
+INSERT INTO public.contacts (id, name, email, last_contact, phone)
 VALUES 
-('c1', 'Jane Doe', 'jane.doe@acme.corp', 'Acme Corporation', 'Senior VP Sales', 'Customer', 'Há 2 horas', '+1 (555) 234-5678', 'Me', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80'),
-('c2', 'Michael Wood', 'm.wood@techstart.io', 'TechStart Inc.', 'CTO', 'Lead', 'Ontem', '+1 (555) 876-5432', 'Sarah Miller', 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&auto=format&fit=crop&q=80'),
-('c3', 'Sarah Hughes', 's.hughes@globalweb.com', 'GlobalWeb', 'Head of Operations', 'Lead', '12 de Out, 2023', '+1 (555) 345-6789', 'Me', null),
-('c4', 'Robert King', 'robert@fincloud.biz', 'FinCloud', 'Procurement Director', 'Customer', '08 de Out, 2023', '+1 (555) 987-6543', 'Sarah Miller', null),
-('c5', 'Emily Lewis', 'emily@nexus.design', 'Nexus Design', 'Creative Lead', 'Lead', '05 de Out, 2023', '+1 (555) 456-7890', 'Me', 'https://picsum.photos/seed/emily/120/120')
+('c1', 'Jane Doe', 'jane.doe@acme.corp', 'Há 2 horas', '+1 (555) 234-5678'),
+('c4', 'Robert King', 'robert@fincloud.biz', '08 de Out, 2023', '+1 (555) 987-6543')
 ON CONFLICT (id) DO NOTHING;
 
 -- Deals
@@ -134,9 +125,6 @@ INSERT INTO public.deals (id, client_name, service_description, value, cost, sta
 VALUES 
 ('d1', 'Jane Doe', 'Higienização Completa de Sofá de Canto', 450, 80, 'Proposta', '2026-05-24', 'Alex'),
 ('d2', 'Robert King', 'Impermeabilização de Estofados', 600, 150, 'Realizado', '2026-05-23', 'Sarah Miller'),
-('d3', 'Michael Wood', 'Lavagem e Secagem de Tapetes Persas', 1200, 300, 'Proposta', '2026-05-24', 'Alex'),
-('d4', 'Sarah Hughes', 'Higienização Automotiva e Polimento', 850, 180, 'Agendado', '2026-05-24', 'Alex'),
-('d5', 'Emily Lewis', 'Limpeza de Colchão Casal King', 350, 50, 'Proposta', '2026-05-24', 'Alex'),
 ('d6', 'Robert King', 'Higienização de Poltronas e Cadeiras', 950, 160, 'Realizado', '2026-05-24', 'Alex')
 ON CONFLICT (id) DO NOTHING;
 
@@ -145,7 +133,6 @@ INSERT INTO public.tasks (id, title, associated_with, completed, priority, due_d
 VALUES 
 ('t1', 'Enviar proposta final de higienização', 'Jane Doe', false, 'Urgent', '2026-05-31'),
 ('t2', 'Confirmar recebimento do pagamento', 'Robert King', true, 'Medium', '2026-05-28'),
-('t3', 'Preparar insumos de impermeabilização', 'Michael Wood', false, 'Low', '2026-06-02'),
 ('t4', 'Ligar pós-venda para avaliação de satisfação', 'Robert King', true, 'Medium', '2026-05-29')
 ON CONFLICT (id) DO NOTHING;
 
@@ -153,7 +140,5 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.activities (id, type, title, sub, time)
 VALUES 
 ('a1', 'closed', 'Serviço Concluído: Robert King', 'Impermeabilização de Estofados finalizado e aprovado', 'Há 1 hora'),
-('a2', 'contact', 'Mensagem WhatsApp enviada', 'Enviado link de agendamento para Jane Doe', 'Há 5 horas'),
-('a3', 'call', 'Chamada recebida: Michael Wood', 'Dúvidas sobre o tempo de secagem do tapete', 'Ontem às 16:30'),
-('a4', 'email', 'E-mail enviado: Sarah Hughes', 'Orçamento detalhado de limpeza automotiva enviado', '2 dias atrás')
+('a2', 'contact', 'Mensagem WhatsApp enviada', 'Enviado link de agendamento para Jane Doe', 'Há 5 horas')
 ON CONFLICT (id) DO NOTHING;

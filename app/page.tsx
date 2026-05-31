@@ -51,61 +51,15 @@ const INITIAL_CONTACTS: Contact[] = [
     id: "c1",
     name: "Jane Doe",
     email: "jane.doe@acme.corp",
-    company: "Acme Corporation",
-    role: "Senior VP Sales",
-    status: "Customer",
     lastContact: "Há 2 horas",
-    phone: "+1 (555) 234-5678",
-    owner: "Me",
-    avatarUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuCarguWrWz5TWuyV6J_UVDN5rwVyzWcZMTtr52bjn07D7M9xSdszI53dsc5UF585772DUC5tWmmbHW55R7ThXndO9RlF_e6oI6SyhTXr9W1yTbwdiUO9Bglwg74xc8lGjvrINyxai500AmXaOvTlxAZUwmPf5pvVLcdJu9oJoeJ78_a37zTkMzjS6e4M0nZMgHfm3kB6XFBkxL3rwY0QlUsbiRTcbIylcaywtB6k9EukHfT19o1-PZYQOeK-TLPzKcY6LLKx0-VKqg"
-  },
-  {
-    id: "c2",
-    name: "Michael Wood",
-    email: "m.wood@techstart.io",
-    company: "TechStart Inc.",
-    role: "CTO",
-    status: "Lead",
-    lastContact: "Ontem",
-    phone: "+1 (555) 876-5432",
-    owner: "Sarah Miller",
-    avatarUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuBMzDxcw3E8i9B8dw3x535fnmjuUd0cwm7y5QHCMpSmqVaKWPjW4T89mjRqi_R91t3WoKpNsx90j19uGNnM74LsuzeXzvFWt5O5ElcPAUrZ9IkRm6q8zP8NL300z8eIlu6GR8ObbX7eVunGyMfJ1gLYoFnIUL0QizMN7SpFJT4h8LVHzo5g7nkioGrEjeMG_VOjEA_G6fA56gSi8LrLP6y7wCn1jaNi4eC4QVoVmldIXmesJBor_U1pUPWp6bJUgg1gKLKvm5mqmQ"
-  },
-  {
-    id: "c3",
-    name: "Sarah Hughes",
-    email: "s.hughes@globalweb.com",
-    company: "GlobalWeb",
-    role: "Head of Operations",
-    status: "Lead",
-    lastContact: "12 de Out, 2023",
-    phone: "+1 (555) 345-6789",
-    owner: "Me",
-    avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80"
+    phone: "+1 (555) 234-5678"
   },
   {
     id: "c4",
     name: "Robert King",
     email: "robert@fincloud.biz",
-    company: "FinCloud",
-    role: "Procurement Director",
-    status: "Customer",
     lastContact: "08 de Out, 2023",
-    phone: "+1 (555) 987-6543",
-    owner: "Sarah Miller",
-    avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&auto=format&fit=crop&q=80"
-  },
-  {
-    id: "c5",
-    name: "Emily Lewis",
-    email: "emily@nexus.design",
-    company: "Nexus Design",
-    role: "Creative Lead",
-    status: "Lead",
-    lastContact: "05 de Out, 2023",
-    phone: "+1 (555) 456-7890",
-    owner: "Me",
-    avatarUrl: "https://picsum.photos/seed/emily/120/120"
+    phone: "+1 (555) 987-6543"
   }
 ];
 
@@ -131,36 +85,6 @@ const INITIAL_DEALS: Deal[] = [
     owner: "Sarah Miller"
   },
   {
-    id: "d3",
-    clientName: "Michael Wood",
-    serviceDescription: "Lavagem e Secagem de Tapetes Persas",
-    value: 1200,
-    cost: 300,
-    stage: "Proposta",
-    date: "2026-05-24",
-    owner: "Alex"
-  },
-  {
-    id: "d4",
-    clientName: "Sarah Hughes",
-    serviceDescription: "Higienização Automotiva e Polimento",
-    value: 850,
-    cost: 180,
-    stage: "Agendado",
-    date: "2026-05-24",
-    owner: "Alex"
-  },
-  {
-    id: "d5",
-    clientName: "Emily Lewis",
-    serviceDescription: "Limpeza de Colchão Casal King",
-    value: 350,
-    cost: 50,
-    stage: "Proposta",
-    date: "2026-05-24",
-    owner: "Alex"
-  },
-  {
     id: "d6",
     clientName: "Robert King",
     serviceDescription: "Higienização de Poltronas e Cadeiras",
@@ -169,16 +93,6 @@ const INITIAL_DEALS: Deal[] = [
     stage: "Realizado",
     date: "2026-05-20",
     owner: "Sarah Miller"
-  },
-  {
-    id: "d7",
-    clientName: "Emily Lewis",
-    serviceDescription: "Limpeza de Cortinas e Persianas",
-    value: 700,
-    cost: 120,
-    stage: "Realizado",
-    date: "2026-05-10",
-    owner: "Alex"
   },
   {
     id: "d8",
