@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS public.deals (
     cost DOUBLE PRECISION NOT NULL DEFAULT 0,
     stage TEXT NOT NULL CHECK (stage IN ('Proposta', 'Agendado', 'Realizado')),
     date TEXT NOT NULL,
-    owner TEXT DEFAULT 'Alex',
     photo_before TEXT,
     photo_after TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
@@ -121,11 +120,11 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Deals
-INSERT INTO public.deals (id, client_name, service_description, value, cost, stage, date, owner)
+INSERT INTO public.deals (id, client_name, service_description, value, cost, stage, date)
 VALUES 
-('d1', 'Jane Doe', 'Higienização Completa de Sofá de Canto', 450, 80, 'Proposta', '2026-05-24', 'Alex'),
-('d2', 'Robert King', 'Impermeabilização de Estofados', 600, 150, 'Realizado', '2026-05-23', 'Sarah Miller'),
-('d6', 'Robert King', 'Higienização de Poltronas e Cadeiras', 950, 160, 'Realizado', '2026-05-24', 'Alex')
+('d1', 'Jane Doe', 'Higienização Completa de Sofá de Canto', 450, 80, 'Proposta', '2026-05-24'),
+('d2', 'Robert King', 'Impermeabilização de Estofados', 600, 150, 'Realizado', '2026-05-23'),
+('d6', 'Robert King', 'Higienização de Poltronas e Cadeiras', 950, 160, 'Realizado', '2026-05-24')
 ON CONFLICT (id) DO NOTHING;
 
 -- Tasks

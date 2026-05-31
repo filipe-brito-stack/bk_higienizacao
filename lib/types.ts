@@ -19,7 +19,6 @@ export interface Deal {
   cost: number; // Valor gasto para realizar o serviço (custo)
   stage: "Proposta" | "Agendado" | "Realizado";
   date: string; // Data da oportunidade/serviço preenchida por padrão
-  owner: string;
   photoBefore?: string;
   photoAfter?: string;
 }

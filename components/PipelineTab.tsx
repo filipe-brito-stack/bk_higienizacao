@@ -97,7 +97,6 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
   const [newValueStr, setNewValueStr] = useState("");
   const [newCostStr, setNewCostStr] = useState("");
   const [newStage, setNewStage] = useState<Deal["stage"]>("Proposta");
-  const [newOwner, setNewOwner] = useState("Alex");
   const [photoBefore, setPhotoBefore] = useState("");
   const [photoAfter, setPhotoAfter] = useState("");
   const [activeModalImage, setActiveModalImage] = useState<string | null>(null);
@@ -179,7 +178,6 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       cost: costNum,
       stage: newStage,
       date: newDate,
-      owner: newOwner,
       photoBefore: photoBefore || undefined,
       photoAfter: photoAfter || undefined,
     };

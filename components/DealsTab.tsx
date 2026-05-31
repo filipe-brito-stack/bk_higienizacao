@@ -147,6 +147,7 @@ export default function DealsTab({
   setTasks 
 }: DealsTabProps) {
   const [editingDealId, setEditingDealId] = useState<string | null>(null);
+  const [dealIdToConfirmDelete, setDealIdToConfirmDelete] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [editCost, setEditCost] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -249,6 +250,11 @@ export default function DealsTab({
     setEditPrice(formatBRL(deal.value));
     setEditCost(formatBRL(deal.cost));
     setEditDescription(deal.serviceDescription);
+  };
+
+  const handleDeleteDeal = (dealId: string) => {
+    setDeals((prev) => prev.filter((d) => d.id !== dealId));
+    setDealIdToConfirmDelete(null);
   };
 
   return (
@@ -379,12 +385,42 @@ export default function DealsTab({
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => startEdit(deal)}
-                          className="text-blue-600 font-bold hover:underline cursor-pointer text-[10px]"
-                        >
-                          Editar
-                        </button>
+                        <div className="flex gap-3 justify-end items-center">
+                          {dealIdToConfirmDelete === deal.id ? (
+                            <div className="flex items-center gap-1 animate-fadeIn bg-rose-50 border border-rose-100 rounded px-1.5 py-0.5">
+                              <span className="text-[9px] text-rose-700 font-bold mr-1">Confirma?</span>
+                              <button
+                                onClick={() => handleDeleteDeal(deal.id)}
+                                className="bg-rose-600 text-white hover:bg-rose-700 px-1.5 py-0.5 rounded text-[8px] font-bold cursor-pointer"
+                              >
+                                Sim
+                              </button>
+                              <button
+                                onClick={() => setDealIdToConfirmDelete(null)}
+                                className="bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 px-1.5 py-0.5 rounded text-[8px] font-bold cursor-pointer"
+                              >
+                                Não
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startEdit(deal)}
+                                className="text-blue-600 font-bold hover:underline cursor-pointer text-[10px]"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => setDealIdToConfirmDelete(deal.id)}
+                                className="text-rose-600 font-bold hover:text-rose-800 hover:underline cursor-pointer text-[10px] flex items-center gap-1"
+                                title="Deletar serviço"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Deletar
+                              </button>
+                            </>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -485,12 +521,43 @@ export default function DealsTab({
                       </button>
                     </>
                   ) : (
-                    <button
-                      onClick={() => startEdit(deal)}
-                      className="px-3 py-1.5 border border-slate-200 text-blue-600 font-bold hover:bg-blue-50/50 rounded-md transition-all text-[10px] flex items-center justify-center min-w-[70px]"
-                    >
-                      Editar
-                    </button>
+                    <div className="flex gap-2">
+                      {dealIdToConfirmDelete === deal.id ? (
+                        <div className="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-md p-1 px-2 animate-fadeIn w-full justify-between">
+                          <span className="text-[10px] text-rose-700 font-bold">Confirma exclusão?</span>
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={() => handleDeleteDeal(deal.id)}
+                              className="bg-rose-600 hover:bg-rose-700 text-white rounded px-2.5 py-1 text-[10px] font-extrabold cursor-pointer transition-all"
+                            >
+                              Sim
+                            </button>
+                            <button
+                              onClick={() => setDealIdToConfirmDelete(null)}
+                              className="bg-white border border-slate-200 text-slate-500 rounded px-2.5 py-1 text-[10px] font-bold cursor-pointer transition-all"
+                            >
+                              Não
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => startEdit(deal)}
+                            className="px-3 py-1.5 border border-slate-200 text-blue-600 font-bold hover:bg-blue-50/50 rounded-md transition-all text-[10px] flex items-center justify-center min-w-[70px] cursor-pointer"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => setDealIdToConfirmDelete(deal.id)}
+                            className="px-3 py-1.5 border border-rose-200 text-rose-600 font-bold hover:bg-rose-50 rounded-md transition-all text-[10px] flex items-center justify-center gap-1 min-w-[70px] cursor-pointer"
+                          >
+                            <Trash2 className="w-3" />
+                            Deletar
+                          </button>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

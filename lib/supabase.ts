@@ -48,7 +48,6 @@ export function mapDealFromDB(row: any): Deal {
     cost: Number(row.cost) || 0,
     stage: row.stage as Deal["stage"],
     date: row.date,
-    owner: row.owner || "Alex",
     photoBefore: row.photo_before || undefined,
     photoAfter: row.photo_after || undefined,
   };
@@ -63,7 +62,6 @@ export function mapDealToDB(deal: Partial<Deal>): any {
   if (deal.cost !== undefined) row.cost = deal.cost;
   if (deal.stage !== undefined) row.stage = deal.stage;
   if (deal.date !== undefined) row.date = deal.date;
-  if (deal.owner !== undefined) row.owner = deal.owner;
   if (deal.photoBefore !== undefined) row.photo_before = deal.photoBefore;
   if (deal.photoAfter !== undefined) row.photo_after = deal.photoAfter;
   return row;
@@ -133,3 +131,4 @@ export function mapGoalsToDB(goals: CRMGoals): any {
     lead_quality_score: goals.leadQualityScore,
   };
 }
+

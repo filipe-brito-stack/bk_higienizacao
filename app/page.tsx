@@ -71,8 +71,7 @@ const INITIAL_DEALS: Deal[] = [
     value: 450,
     cost: 80,
     stage: "Proposta",
-    date: "2026-05-24",
-    owner: "Alex"
+    date: "2026-05-24"
   },
   {
     id: "d2",
@@ -81,8 +80,7 @@ const INITIAL_DEALS: Deal[] = [
     value: 600,
     cost: 150,
     stage: "Realizado",
-    date: "2026-05-23",
-    owner: "Sarah Miller"
+    date: "2026-05-23"
   },
   {
     id: "d6",
@@ -91,8 +89,7 @@ const INITIAL_DEALS: Deal[] = [
     value: 950,
     cost: 160,
     stage: "Realizado",
-    date: "2026-05-20",
-    owner: "Sarah Miller"
+    date: "2026-05-20"
   },
   {
     id: "d8",
@@ -101,8 +98,7 @@ const INITIAL_DEALS: Deal[] = [
     value: 2500,
     cost: 650,
     stage: "Realizado",
-    date: "2026-05-02",
-    owner: "Alex"
+    date: "2026-05-02"
   }
 ];
 
@@ -334,8 +330,7 @@ export default function RootPage() {
                   value,
                   cost,
                   stage,
-                  date,
-                  owner: d.owner || "Alex"
+                  date
                 };
               })
               .filter((d) => {
@@ -496,21 +491,24 @@ export default function RootPage() {
     if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_contacts", JSON.stringify(contacts));
 
-    if (supabase) {
+    const sb = supabase;
+    if (sb) {
       const dbRows = contacts.map(c => mapContactToDB(c));
       if (dbRows.length > 0) {
-        supabase.from("contacts").upsert(dbRows).then(({ error }) => {
-          if (error) console.error("Error syncing contacts:", error);
+        sb.from("contacts").upsert(dbRows).then(({ error }) => {
+          if (error) {
+            console.error("Error syncing contacts:", error.message || error, "Details:", error.details, "Hint:", error.hint, "Code:", error.code);
+          }
         });
       }
       
       const currentIds = contacts.map(c => c.id).filter(Boolean);
       if (currentIds.length > 0) {
-        supabase.from("contacts").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+        sb.from("contacts").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
           if (error) console.error("Error pruning remote contacts:", error);
         });
       } else {
-        supabase.from("contacts").delete().neq("id", "").then(({ error }) => {
+        sb.from("contacts").delete().neq("id", "").then(({ error }) => {
           if (error) console.error("Error pruning all remote contacts:", error);
         });
       }
