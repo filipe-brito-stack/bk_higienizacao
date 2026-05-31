@@ -43,6 +43,28 @@ export default function ContactsTab({
   const [showEditModal, setShowEditModal] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
 
+  // Validation & Formatting States
+  const [phoneError, setPhoneError] = useState("");
+  const [editPhoneError, setEditPhoneError] = useState("");
+
+  // Phone Mask formatting helper: limit to 11 digits and format as (XX) XXXXX-XXXX
+  const formatPhone = (val: string) => {
+    const cleanNumbers = val.replace(/\D/g, "");
+    const limited = cleanNumbers.slice(0, 11);
+    
+    let formatted = "";
+    if (limited.length > 0) {
+      if (limited.length <= 2) {
+        formatted = `(${limited}`;
+      } else if (limited.length <= 7) {
+        formatted = `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
+      } else {
+        formatted = `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+      }
+    }
+    return formatted;
+  };
+
   // Helper to format/validate birth date as DD/MM
   const handleBirthDateInputChange = (val: string, isEdit: boolean) => {
     // Strip non-numbers
@@ -163,12 +185,20 @@ export default function ContactsTab({
     e.preventDefault();
     if (!newName.trim() || !newEmail.trim()) return;
 
+    // Enforce exactly 11 digits format for Phone
+    const phoneDigits = newPhone.replace(/\D/g, "");
+    if (phoneDigits.length !== 11) {
+      setPhoneError("Por favor, preencha o número de telefone completo com 11 dígitos no formato: (99) 99999-9999");
+      return;
+    }
+    setPhoneError("");
+
     const newContact: Contact = {
       id: Math.random().toString(),
       name: newName,
       email: newEmail,
       lastContact: "Recém adicionado",
-      phone: newPhone || "+1 (555) 000-0000",
+      phone: newPhone,
       birthMonth: newBirthMonth || undefined,
       birthYear: newBirthYear || undefined,
       address: newAddress || undefined,
@@ -198,12 +228,18 @@ export default function ContactsTab({
     setNewLatitude(null);
     setNewLongitude(null);
     setBirthDateInput("");
+    setPhoneError("");
     setShowAddModal(false);
   };
 
-  // Open edit modal and initialize state
+  // Open edit modal and initialize state and pre-format values
   const handleOpenEditModal = (contact: Contact) => {
-    setEditableContact(contact);
+    const formattedPhone = formatPhone(contact.phone || "");
+    setEditableContact({
+      ...contact,
+      phone: formattedPhone
+    });
+    setEditPhoneError("");
     if (contact.birthMonth && contact.birthYear) {
       setEditBirthDateInput(`${contact.birthMonth}/${contact.birthYear}`);
     } else {
@@ -217,8 +253,16 @@ export default function ContactsTab({
     e.preventDefault();
     if (!editableContact) return;
 
+    // Enforce exactly 11 digits format for Phone
+    const phoneDigits = (editableContact.phone || "").replace(/\D/g, "");
+    if (phoneDigits.length !== 11) {
+      setEditPhoneError("Por favor, preencha o número de telefone completo com 11 dígitos no formato: (99) 99999-9999");
+      return;
+    }
+    setEditPhoneError("");
+
     setContacts((prev) =>
-      prev.map((c) => (c.id === editableContact.id ? editableContact : c))
+      prev.map((c) => (c.id === editableContact.id ? { ...editableContact, phone: editableContact.phone } : c))
     );
 
     // Log action
@@ -233,6 +277,7 @@ export default function ContactsTab({
 
     setShowEditModal(false);
     setEditableContact(null);
+    setEditPhoneError("");
   };
 
   // Delete Contact
@@ -358,7 +403,7 @@ export default function ContactsTab({
                         </div>
                       </td>
                       <td className="px-6 py-4 text-on-surface-variant font-medium">
-                        {contact.phone || <span className="text-slate-400 italic">Não informado</span>}
+                        {contact.phone ? formatPhone(contact.phone) : <span className="text-slate-400 italic">Não informado</span>}
                       </td>
                       <td className="px-6 py-4 text-on-surface-variant font-medium">
                         {contact.birthMonth && contact.birthYear ? (
@@ -431,7 +476,7 @@ export default function ContactsTab({
                 <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500 pt-1 font-medium border-t border-slate-50">
                   <div>
                     <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Telefone</span>
-                    <span>{contact.phone || <span className="text-slate-300 italic">Não informado</span>}</span>
+                    <span>{contact.phone ? formatPhone(contact.phone) : <span className="text-slate-300 italic">Não informado</span>}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Aniversário</span>
@@ -545,10 +590,26 @@ export default function ContactsTab({
                   <label className="text-[11px] font-bold text-slate-555 block mb-1">Telefone Principal</label>
                   <input
                     type="text"
+                    required
+                    placeholder="(99) 99999-9999"
                     value={editableContact.phone || ""}
-                    onChange={(e) => setEditableContact({ ...editableContact, phone: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium"
+                    onChange={(e) => {
+                      const formatted = formatPhone(e.target.value);
+                      setEditableContact({ ...editableContact, phone: formatted });
+                      const digits = formatted.replace(/\D/g, "");
+                      if (digits.length > 0 && digits.length !== 11) {
+                        setEditPhoneError("Dígitos insuficientes. O formato deve ser (99) 99999-9999");
+                      } else {
+                        setEditPhoneError("");
+                      }
+                    }}
+                    className={`w-full bg-slate-50 border px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium ${
+                      editPhoneError ? "border-rose-400 focus:ring-1 focus:ring-rose-400" : "border-slate-200"
+                    }`}
                   />
+                  {editPhoneError && (
+                    <span className="text-[10px] text-rose-600 block mt-1 font-semibold">{editPhoneError}</span>
+                  )}
                 </div>
 
                 {/* Aniversário (Dia e Mês) - EDIT */}
@@ -656,11 +717,26 @@ export default function ContactsTab({
                   <label className="text-[11px] font-bold text-slate-500 block mb-1">Telefone Principal</label>
                   <input
                     type="text"
-                    placeholder="+55 (11) 99999-9999"
+                    required
+                    placeholder="(99) 99999-9999"
                     value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
-                    className="w-full bg-slate-50 border border-outline-variant/50 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                    onChange={(e) => {
+                      const formatted = formatPhone(e.target.value);
+                      setNewPhone(formatted);
+                      const digits = formatted.replace(/\D/g, "");
+                      if (digits.length > 0 && digits.length !== 11) {
+                        setPhoneError("Dígitos insuficientes. O formato deve ser (99) 99999-9999");
+                      } else {
+                        setPhoneError("");
+                      }
+                    }}
+                    className={`w-full bg-slate-50 border px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium ${
+                      phoneError ? "border-rose-400 focus:ring-1 focus:ring-rose-400" : "border-outline-variant/50"
+                    }`}
                   />
+                  {phoneError && (
+                    <span className="text-[10px] text-rose-600 block mt-1 font-semibold">{phoneError}</span>
+                  )}
                 </div>
 
                 {/* Aniversário (Dia e Mês) */}
