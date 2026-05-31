@@ -331,6 +331,7 @@ export default function ContactsTab({
             <thead className="bg-slate-50 border-b border-outline-variant/40 text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">
               <tr>
                 <th className="px-6 py-4">Nome / Email</th>
+                <th className="px-6 py-4">Telefone</th>
                 <th className="px-6 py-4">Aniversário</th>
                 <th className="px-6 py-4">Endereço / Localização</th>
                 <th className="px-6 py-4">Último contato</th>
@@ -340,7 +341,7 @@ export default function ContactsTab({
             <tbody className="divide-y divide-outline-variant/20 text-xs text-slate-700">
               {paginatedContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-16 text-outline italic">
+                  <td colSpan={6} className="text-center py-16 text-outline italic">
                     Nenhum cliente coincide com os filtros configurados.
                   </td>
                 </tr>
@@ -355,6 +356,9 @@ export default function ContactsTab({
                           </span>
                           <span className="text-[10px] text-outline tracking-tight mt-0.5 block">{contact.email}</span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-on-surface-variant font-medium">
+                        {contact.phone || <span className="text-slate-400 italic">Não informado</span>}
                       </td>
                       <td className="px-6 py-4 text-on-surface-variant font-medium">
                         {contact.birthMonth && contact.birthYear ? (
@@ -426,10 +430,14 @@ export default function ContactsTab({
 
                 <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500 pt-1 font-medium border-t border-slate-50">
                   <div>
+                    <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Telefone</span>
+                    <span>{contact.phone || <span className="text-slate-300 italic">Não informado</span>}</span>
+                  </div>
+                  <div>
                     <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Aniversário</span>
                     <span>{contact.birthMonth && contact.birthYear ? `${contact.birthMonth}/${contact.birthYear}` : <span className="text-slate-300 italic">Não informado</span>}</span>
                   </div>
-                  <div>
+                  <div className="col-span-2 border-t border-slate-100/50 pt-2">
                     <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Último Contato</span>
                     <span>{contact.lastContact}</span>
                   </div>
