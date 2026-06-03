@@ -8,6 +8,7 @@ interface PipelineTabProps {
   setDeals: React.Dispatch<React.SetStateAction<Deal[]>>;
   setActivities: React.Dispatch<React.SetStateAction<Activity[]>>;
   contacts?: Contact[];
+  setContacts?: React.Dispatch<React.SetStateAction<Contact[]>>;
 }
 
 const STAGES: Deal["stage"][] = ["Proposta", "Agendado", "Realizado"];
@@ -79,7 +80,7 @@ function formatBRLValue(value: number): string {
   });
 }
 
-export default function PipelineTab({ deals, setDeals, setActivities, contacts = [] }: PipelineTabProps) {
+export default function PipelineTab({ deals, setDeals, setActivities, contacts = [], setContacts }: PipelineTabProps) {
   const [showAddDeal, setShowAddDeal] = useState(false);
   const [activeStageFilter, setActiveStageFilter] = useState<Deal["stage"] | "Todos">("Todos");
   
@@ -183,6 +184,27 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
     };
 
     setDeals((prev: Deal[]) => [createdDeal, ...prev]);
+
+    // Update contact's updatedAt to be equal to the service date
+    if (setContacts) {
+      setContacts((prevContacts) =>
+        prevContacts.map((c) => {
+          if (c.name.trim().toLowerCase() === clientSearch.trim().toLowerCase()) {
+            try {
+              const serviceDateIso = new Date(createdDeal.date + "T12:00:00").toISOString();
+              return {
+                ...c,
+                updatedAt: serviceDateIso,
+                lastContact: createdDeal.date,
+              };
+            } catch (err) {
+              console.error("Error formatting service date to ISO", err);
+            }
+          }
+          return c;
+        })
+      );
+    }
 
     // Log Activity
     const newActivity: Activity = {

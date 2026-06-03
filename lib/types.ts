@@ -9,6 +9,7 @@ export interface Contact {
   address?: string;
   latitude?: number;
   longitude?: number;
+  updatedAt?: string;
 }
 
 export interface Deal {

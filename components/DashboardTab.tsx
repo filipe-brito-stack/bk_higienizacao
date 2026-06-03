@@ -257,22 +257,8 @@ export default function DashboardTab({
   const currentMonthCustomers = contacts.length;
   const customersProgressPct = Math.min(100, Math.round((currentMonthCustomers / customersTarget) * 100));
 
-  // Dynamically calculate lead quality score based on contact profile completeness across all contacts
-  const calculatedLeadScore = contacts.length > 0
-    ? Math.round(
-        contacts.reduce((sum, c) => {
-          let score = 0;
-          if (c.email && c.email.trim() !== "") score += 33;
-          if (c.phone && c.phone.trim() !== "") score += 33;
-          if ((c.address && c.address.trim() !== "") || (c.latitude !== undefined && c.longitude !== undefined && c.latitude !== null && c.longitude !== null)) {
-            score += 34;
-          }
-          return sum + score;
-        }, 0) / contacts.length
-      )
-    : 100;
-
-  const leadScore = Math.min(100, Math.max(0, calculatedLeadScore));
+  // Rule: Sum of Monthly Revenue target percentage and New Customers target percentage, divided by 2
+  const leadScore = Math.round((revenueProgressPct + customersProgressPct) / 2);
 
   // Toggle tasks
   const handleToggleTask = (taskId: string) => {
@@ -375,7 +361,7 @@ export default function DashboardTab({
               Este Mês
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido (Mês Atual)</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
             R$ {formatBRL(totalRevenue)}
           </h2>
@@ -392,7 +378,7 @@ export default function DashboardTab({
               Custo do Mês
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Custo Operacional (Mês Atual)</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Custo Operacional</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
             R$ {formatBRL(totalCost)}
           </h2>
@@ -409,7 +395,7 @@ export default function DashboardTab({
               Lucro do Mês
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido Líquido (Mês Atual)</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Valor Recebido Líquido</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">
             R$ {formatBRL(netProfit)}
           </h2>
@@ -426,7 +412,7 @@ export default function DashboardTab({
               Ativos do Mês
             </span>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Serviços ativos (Mês Atual)</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Serviços ativos</p>
           <h2 className="text-2xl font-extrabold text-on-surface mt-1">{activeDealsCount}</h2>
         </div>
       </section>

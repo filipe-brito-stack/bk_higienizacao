@@ -47,6 +47,52 @@ export default function ContactsTab({
   const [phoneError, setPhoneError] = useState("");
   const [editPhoneError, setEditPhoneError] = useState("");
 
+  // Helper to format ISO string to DD/MM/YYYY
+  const formatLastContactDate = (updatedAtVal?: string, fallbackLastContact?: string) => {
+    if (!updatedAtVal) {
+      if (fallbackLastContact && fallbackLastContact.includes("/")) {
+        return fallbackLastContact;
+      }
+      return fallbackLastContact || "Não informado";
+    }
+    try {
+      const d = new Date(updatedAtVal);
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return fallbackLastContact || "Não informado";
+  };
+
+  // Helper to convert ISO format to standard HTML date picker input YYYY-MM-DD
+  const getFormattedDateForInput = (isoString?: string) => {
+    if (!isoString) {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+    try {
+      const d = new Date(isoString);
+      if (!isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+    } catch (e) {
+      // ignore
+    }
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
   // Phone Mask formatting helper: limit to 11 digits and format as (XX) XXXXX-XXXX
   const formatPhone = (val: string) => {
     const cleanNumbers = val.replace(/\D/g, "");
@@ -204,6 +250,7 @@ export default function ContactsTab({
       address: newAddress || undefined,
       latitude: newLatitude !== null ? newLatitude : undefined,
       longitude: newLongitude !== null ? newLongitude : undefined,
+      updatedAt: new Date().toISOString(),
     };
 
     setContacts((prev) => [newContact, ...prev]);
@@ -431,7 +478,7 @@ export default function ContactsTab({
                           <span className="text-slate-400 italic">Não informado</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-on-surface-variant font-medium">{contact.lastContact}</td>
+                      <td className="px-6 py-4 text-on-surface-variant font-medium">{formatLastContactDate(contact.updatedAt, contact.lastContact)}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
                            <button
@@ -484,7 +531,7 @@ export default function ContactsTab({
                   </div>
                   <div className="col-span-2 border-t border-slate-100/50 pt-2">
                     <span className="text-slate-400 block font-bold uppercase tracking-wider text-[8px] mb-0.5">Último Contato</span>
-                    <span>{contact.lastContact}</span>
+                    <span>{formatLastContactDate(contact.updatedAt, contact.lastContact)}</span>
                   </div>
                 </div>
 
@@ -645,6 +692,27 @@ export default function ContactsTab({
                   value={editableContact.address || ""}
                   onChange={(e) => setEditableContact({ ...editableContact, address: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800"
+                />
+              </div>
+
+              {/* Último Contato Manual Update - EDIT */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Último Contato (Data)</label>
+                <input
+                  type="date"
+                  value={getFormattedDateForInput(editableContact.updatedAt)}
+                  onChange={(e) => {
+                    const localVal = e.target.value;
+                    if (localVal) {
+                      const isoStr = new Date(localVal + "T12:00:00").toISOString();
+                      setEditableContact({ 
+                        ...editableContact, 
+                        updatedAt: isoStr,
+                        lastContact: formatLastContactDate(isoStr)
+                      });
+                    }
+                  }}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium cursor-pointer"
                 />
               </div>
 

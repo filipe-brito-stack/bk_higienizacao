@@ -21,6 +21,7 @@ export function mapContactFromDB(row: any): Contact {
     address: row.address || undefined,
     latitude: row.latitude !== null ? row.latitude : undefined,
     longitude: row.longitude !== null ? row.longitude : undefined,
+    updatedAt: row.updated_at || undefined,
   };
 }
 
@@ -36,6 +37,7 @@ export function mapContactToDB(contact: Partial<Contact>): any {
   if (contact.address !== undefined) row.address = contact.address;
   if (contact.latitude !== undefined) row.latitude = contact.latitude;
   if (contact.longitude !== undefined) row.longitude = contact.longitude;
+  if (contact.updatedAt !== undefined) row.updated_at = contact.updatedAt;
   return row;
 }
 

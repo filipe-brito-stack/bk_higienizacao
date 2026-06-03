@@ -1077,6 +1077,7 @@ export default function RootPage() {
               setDeals={setDeals}
               setActivities={setActivities}
               contacts={contacts}
+              setContacts={setContacts}
             />
           )}
 
