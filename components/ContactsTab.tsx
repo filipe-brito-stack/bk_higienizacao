@@ -154,7 +154,7 @@ export default function ContactsTab({
   const filteredContacts = contacts.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (c.email || "").toLowerCase().includes(searchTerm.toLowerCase());
 
     // Filter by inactive if requested from the AI panel
     const matchesInactive = !filterInactiveOnly || 
@@ -229,7 +229,7 @@ export default function ContactsTab({
   // Add Contact Handler
   const handleAddContact = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim() || !newEmail.trim()) return;
+    if (!newName.trim()) return;
 
     // Enforce exactly 11 digits format for Phone
     const phoneDigits = newPhone.replace(/\D/g, "");
@@ -624,7 +624,6 @@ export default function ContactsTab({
                   <label className="text-[11px] font-bold text-slate-550 block mb-1">Email Corporativo</label>
                   <input
                     type="email"
-                    required
                     value={editableContact.email}
                     onChange={(e) => setEditableContact({ ...editableContact, email: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-800 font-medium"
@@ -771,7 +770,6 @@ export default function ContactsTab({
                   <label className="text-[11px] font-bold text-slate-500 block mb-1">Email</label>
                   <input
                     type="email"
-                    required
                     placeholder="joao@empresa.com"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}

@@ -93,7 +93,6 @@ export function mapTaskToDB(task: Partial<Task>): any {
   if (task.value !== undefined) row.value = task.value;
   if (task.updatedAt !== undefined) {
     row.updated_at = task.updatedAt;
-    row.update_at = task.updatedAt;
   }
   return row;
 }
