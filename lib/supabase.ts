@@ -78,6 +78,7 @@ export function mapTaskFromDB(row: any): Task {
     priority: row.priority as Task["priority"],
     dueDate: row.due_date,
     value: row.value !== null ? Number(row.value) : undefined,
+    updatedAt: row.updated_at || row.update_at || undefined,
   };
 }
 
@@ -90,6 +91,10 @@ export function mapTaskToDB(task: Partial<Task>): any {
   if (task.priority !== undefined) row.priority = task.priority;
   if (task.dueDate !== undefined) row.due_date = task.dueDate;
   if (task.value !== undefined) row.value = task.value;
+  if (task.updatedAt !== undefined) {
+    row.updated_at = task.updatedAt;
+    row.update_at = task.updatedAt;
+  }
   return row;
 }
 

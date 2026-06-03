@@ -65,6 +65,33 @@ function formatTaskDueDate(due: string): string {
   return word;
 }
 
+function formatTaskUpdatedAt(updatedAt?: string, fallbackDue?: string): string {
+  if (!updatedAt) {
+    if (fallbackDue) {
+      return formatTaskDueDate(fallbackDue);
+    }
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  try {
+    const d = new Date(updatedAt);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return fallbackDue ? formatTaskDueDate(fallbackDue) : "Sem data";
+}
+
 function isCurrentMonth(dateStr: string): boolean {
   if (!dateStr) return false;
   const now = new Date();
@@ -199,7 +226,8 @@ export default function DealsTab({
           priority: editTaskPriority,
           dueDate: editTaskDueDate.trim() || t.dueDate,
           value: !isNaN(valueNum) && valueNum >= 0 ? valueNum : undefined,
-          associatedWith: editTaskAssociated.trim()
+          associatedWith: editTaskAssociated.trim(),
+          updatedAt: new Date().toISOString()
         };
       })
     );
@@ -304,7 +332,6 @@ export default function DealsTab({
                 <th className="px-6 py-4">Descrição</th>
                 <th className="px-6 py-4 text-right">Valor</th>
                 <th className="px-6 py-4 text-right">Valor Gasto</th>
-                <th className="px-6 py-4 text-right">Lucro Líquido</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Data</th>
                 <th className="px-6 py-4 text-right">Ação</th>
@@ -354,9 +381,6 @@ export default function DealsTab({
                         <span className="font-semibold text-rose-600">R$ {formatBRL(deal.cost)}</span>
                       )}
                     </td>
-                    <td className={`px-6 py-4 text-right font-bold ${netProfit >= 0 ? "text-slate-800" : "text-rose-750"}`}>
-                      R$ {formatBRL(netProfit)}
-                    </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         deal.stage === "Realizado" ? "bg-emerald-50 text-emerald-700 border border-emerald-100 animate-pulse" :
@@ -385,41 +409,20 @@ export default function DealsTab({
                           </button>
                         </div>
                       ) : (
-                        <div className="flex gap-3 justify-end items-center">
-                          {dealIdToConfirmDelete === deal.id ? (
-                            <div className="flex items-center gap-1 animate-fadeIn bg-rose-50 border border-rose-100 rounded px-1.5 py-0.5">
-                              <span className="text-[9px] text-rose-700 font-bold mr-1">Confirma?</span>
-                              <button
-                                onClick={() => handleDeleteDeal(deal.id)}
-                                className="bg-rose-600 text-white hover:bg-rose-700 px-1.5 py-0.5 rounded text-[8px] font-bold cursor-pointer"
-                              >
-                                Sim
-                              </button>
-                              <button
-                                onClick={() => setDealIdToConfirmDelete(null)}
-                                className="bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 px-1.5 py-0.5 rounded text-[8px] font-bold cursor-pointer"
-                              >
-                                Não
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => startEdit(deal)}
-                                className="text-blue-600 font-bold hover:underline cursor-pointer text-[10px]"
-                              >
-                                Editar
-                              </button>
-                              <button
-                                onClick={() => setDealIdToConfirmDelete(deal.id)}
-                                className="text-rose-600 font-bold hover:text-rose-800 hover:underline cursor-pointer text-[10px] flex items-center gap-1"
-                                title="Deletar serviço"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Deletar
-                              </button>
-                            </>
-                          )}
+                        <div className="flex gap-1.5 justify-end">
+                          <button
+                            onClick={() => startEdit(deal)}
+                            className="text-blue-600 font-bold hover:underline cursor-pointer text-[10px]"
+                          >
+                            Editar
+                          </button>
+                          <span className="text-slate-200">|</span>
+                          <button
+                            onClick={() => handleDeleteDeal(deal.id)}
+                            className="text-rose-600 font-bold hover:underline cursor-pointer text-[10px]"
+                          >
+                            Excluir
+                          </button>
                         </div>
                       )}
                     </td>
@@ -469,7 +472,7 @@ export default function DealsTab({
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-[10px] pt-1 font-semibold text-center select-none">
+                <div className="grid grid-cols-2 gap-2 text-[10px] pt-1 font-semibold text-center select-none">
                   <div className="bg-slate-50/50 p-2 rounded flex flex-col justify-center border border-slate-100">
                     <span className="text-slate-400 block font-extrabold uppercase tracking-wider text-[7px] mb-0.5">Cobrado</span>
                     {isEditing ? (
@@ -496,12 +499,6 @@ export default function DealsTab({
                       <span className="text-rose-600 text-[11px]">R$ {formatBRL(deal.cost)}</span>
                     )}
                   </div>
-                  <div className="bg-slate-50/50 p-2 rounded flex flex-col justify-center border border-slate-100">
-                    <span className="text-slate-400 block font-extrabold uppercase tracking-wider text-[7px] mb-0.5">Líquido</span>
-                    <span className={`text-[11px] font-extrabold ${netProfit >= 0 ? "text-emerald-700" : "text-rose-750"}`}>
-                      R$ {formatBRL(netProfit)}
-                    </span>
-                  </div>
                 </div>
 
                 <div className="flex justify-end gap-1.5 pt-2.5 border-t border-slate-50">
@@ -521,42 +518,20 @@ export default function DealsTab({
                       </button>
                     </>
                   ) : (
-                    <div className="flex gap-2">
-                      {dealIdToConfirmDelete === deal.id ? (
-                        <div className="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-md p-1 px-2 animate-fadeIn w-full justify-between">
-                          <span className="text-[10px] text-rose-700 font-bold">Confirma exclusão?</span>
-                          <div className="flex gap-1.5">
-                            <button
-                              onClick={() => handleDeleteDeal(deal.id)}
-                              className="bg-rose-600 hover:bg-rose-700 text-white rounded px-2.5 py-1 text-[10px] font-extrabold cursor-pointer transition-all"
-                            >
-                              Sim
-                            </button>
-                            <button
-                              onClick={() => setDealIdToConfirmDelete(null)}
-                              className="bg-white border border-slate-200 text-slate-500 rounded px-2.5 py-1 text-[10px] font-bold cursor-pointer transition-all"
-                            >
-                              Não
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => startEdit(deal)}
-                            className="px-3 py-1.5 border border-slate-200 text-blue-600 font-bold hover:bg-blue-50/50 rounded-md transition-all text-[10px] flex items-center justify-center min-w-[70px] cursor-pointer"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => setDealIdToConfirmDelete(deal.id)}
-                            className="px-3 py-1.5 border border-rose-200 text-rose-600 font-bold hover:bg-rose-50 rounded-md transition-all text-[10px] flex items-center justify-center gap-1 min-w-[70px] cursor-pointer"
-                          >
-                            <Trash2 className="w-3" />
-                            Deletar
-                          </button>
-                        </>
-                      )}
+                    <div className="flex gap-2.5 items-center">
+                      <button
+                        onClick={() => startEdit(deal)}
+                        className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer"
+                      >
+                        Editar
+                      </button>
+                      <span className="text-slate-200 text-xs">|</span>
+                      <button
+                        onClick={() => handleDeleteDeal(deal.id)}
+                        className="text-[10px] text-rose-600 font-bold hover:underline cursor-pointer"
+                      >
+                        Excluir
+                      </button>
                     </div>
                   )}
                 </div>
@@ -637,7 +612,7 @@ export default function DealsTab({
                   paginatedTasks.map((task) => {
                     const handleToggleTask = (id: string) => {
                       setTasks((prev) =>
-                        prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+                        prev.map((t) => (t.id === id ? { ...t, completed: !t.completed, updatedAt: new Date().toISOString() } : t))
                       );
                     };
 
@@ -707,7 +682,7 @@ export default function DealsTab({
                               className="bg-slate-50 border border-slate-205 px-2 py-1.5 rounded text-xs focus:bg-white outline-none w-full font-mono focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
                             />
                           ) : (
-                            formatTaskDueDate(task.dueDate)
+                            formatTaskUpdatedAt(task.updatedAt, task.dueDate)
                           )}
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -788,7 +763,7 @@ export default function DealsTab({
               paginatedTasks.map((task) => {
                 const handleToggleTask = (id: string) => {
                   setTasks((prev) =>
-                    prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+                    prev.map((t) => (t.id === id ? { ...t, completed: !t.completed, updatedAt: new Date().toISOString() } : t))
                   );
                 };
 
@@ -897,8 +872,8 @@ export default function DealsTab({
 
                         <div className="grid grid-cols-2 gap-2 text-[10px] pt-1 font-semibold border-t border-slate-50 select-none">
                           <div className="bg-slate-50/50 p-2 rounded flex flex-col justify-center border border-slate-100">
-                            <span className="text-slate-400 block font-bold uppercase tracking-wider text-[7px] mb-0.5">Prazo</span>
-                            <span className="text-slate-800 font-mono text-[10px]">{formatTaskDueDate(task.dueDate)}</span>
+                            <span className="text-slate-400 block font-bold uppercase tracking-wider text-[7px] mb-0.5">Data</span>
+                            <span className="text-slate-800 font-mono text-[10px]">{formatTaskUpdatedAt(task.updatedAt, task.dueDate)}</span>
                           </div>
                           <div className="bg-slate-50/50 p-2 rounded flex flex-col justify-center border border-slate-100 text-right sm:text-left">
                             <span className="text-slate-400 block font-bold uppercase tracking-wider text-[7px] mb-0.5">Valor</span>

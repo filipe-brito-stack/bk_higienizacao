@@ -263,7 +263,7 @@ export default function DashboardTab({
   // Toggle tasks
   const handleToggleTask = (taskId: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed, updatedAt: new Date().toISOString() } : t))
     );
   };
 
@@ -283,6 +283,7 @@ export default function DashboardTab({
       priority: newTaskPriority,
       dueDate: "Hoje",
       value: isNaN(parsedValue ?? NaN) ? undefined : parsedValue,
+      updatedAt: new Date().toISOString(),
     };
 
     setTasks((prev) => [newTask, ...prev]);

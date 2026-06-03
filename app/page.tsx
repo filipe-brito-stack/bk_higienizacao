@@ -46,98 +46,11 @@ import {
 } from "@/lib/supabase";
 
 
-const INITIAL_CONTACTS: Contact[] = [
-  {
-    id: "c1",
-    name: "Jane Doe",
-    email: "jane.doe@acme.corp",
-    lastContact: "Há 2 horas",
-    phone: "+1 (555) 234-5678"
-  },
-  {
-    id: "c4",
-    name: "Robert King",
-    email: "robert@fincloud.biz",
-    lastContact: "08 de Out, 2023",
-    phone: "+1 (555) 987-6543"
-  }
-];
+const INITIAL_CONTACTS: Contact[] = [];
 
-const INITIAL_DEALS: Deal[] = [
-  {
-    id: "d1",
-    clientName: "Jane Doe",
-    serviceDescription: "Higienização Completa de Sofá de Canto",
-    value: 450,
-    cost: 80,
-    stage: "Proposta",
-    date: "2026-05-24"
-  },
-  {
-    id: "d2",
-    clientName: "Robert King",
-    serviceDescription: "Impermeabilização de Estofados",
-    value: 600,
-    cost: 150,
-    stage: "Realizado",
-    date: "2026-05-23"
-  },
-  {
-    id: "d6",
-    clientName: "Robert King",
-    serviceDescription: "Higienização de Poltronas e Cadeiras",
-    value: 950,
-    cost: 160,
-    stage: "Realizado",
-    date: "2026-05-20"
-  },
-  {
-    id: "d8",
-    clientName: "Jane Doe",
-    serviceDescription: "Higienização Pós-Obra Residencial",
-    value: 2500,
-    cost: 650,
-    stage: "Realizado",
-    date: "2026-05-02"
-  }
-];
+const INITIAL_DEALS: Deal[] = [];
 
-const INITIAL_TASKS: Task[] = [
-  {
-    id: "t1",
-    title: "Acompanhamento com TechFlow Inc.",
-    associatedWith: "Serviço: Higienização Completa (Estágio: Proposta)",
-    completed: false,
-    priority: "Urgent",
-    dueDate: "Hoje",
-    value: 1250.00
-  },
-  {
-    id: "t2",
-    title: "Revisar contrato trimestral - Zenith",
-    associatedWith: "Suporte Recorrente Zenith",
-    completed: false,
-    priority: "Medium",
-    dueDate: "Em 2 dias",
-    value: 450.00
-  },
-  {
-    id: "t3",
-    title: "Enviar apresentação institucional para Spark Labs",
-    associatedWith: "Lead recebida pelo Website",
-    completed: false,
-    priority: "Low",
-    dueDate: "Próxima semana"
-  },
-  {
-    id: "t4",
-    title: "Alinhamento da equipe: Estratégia de Vendas T4",
-    associatedWith: "Sala de Reuniões Nexus - Sala 3",
-    completed: false,
-    priority: "Medium",
-    dueDate: "Hoje às 15:00"
-  }
-];
+const INITIAL_TASKS: Task[] = [];
 
 const INITIAL_ACTIVITIES: Activity[] = [];
 

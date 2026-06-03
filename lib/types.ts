@@ -32,6 +32,7 @@ export interface Task {
   priority: "Urgent" | "Medium" | "Low";
   dueDate: string;
   value?: number;
+  updatedAt?: string;
 }
 
 export interface Activity {
