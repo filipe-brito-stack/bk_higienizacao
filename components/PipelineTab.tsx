@@ -102,6 +102,117 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
   const [photoAfter, setPhotoAfter] = useState("");
   const [activeModalImage, setActiveModalImage] = useState<string | null>(null);
 
+  // Edit form states
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [editClientName, setEditClientName] = useState("");
+  const [showEditClientSuggestions, setShowEditClientSuggestions] = useState(false);
+  const [editDescription, setEditDescription] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editStage, setEditStage] = useState<Deal["stage"]>("Realizado");
+  const [editValueStr, setEditValueStr] = useState("");
+  const [editCostStr, setEditCostStr] = useState("");
+  const [editPhotoBefore, setEditPhotoBefore] = useState("");
+  const [editPhotoAfter, setEditPhotoAfter] = useState("");
+
+  const handleEditPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "before" | "after") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        if (type === "before") {
+          setEditPhotoBefore(reader.result);
+        } else {
+          setEditPhotoAfter(reader.result);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleOpenEditModal = (deal: Deal) => {
+    setEditingDeal(deal);
+    setEditClientName(deal.clientName);
+    setEditDescription(deal.serviceDescription);
+    setEditDate(deal.date);
+    setEditStage(deal.stage);
+    
+    // Set formatted values for inputs
+    const valCentsStr = (deal.value * 100).toFixed(0);
+    setEditValueStr(formatToBRL(valCentsStr));
+    
+    const costCentsStr = (deal.cost * 100).toFixed(0);
+    setEditCostStr(formatToBRL(costCentsStr));
+    
+    setEditPhotoBefore(deal.photoBefore || "");
+    setEditPhotoAfter(deal.photoAfter || "");
+    setShowEditClientSuggestions(false);
+  };
+
+  const handleUpdateDeal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDeal) return;
+
+    const valueNum = parseFloat(editValueStr.replace(/\D/g, "")) / 100 || 0;
+    const costNum = parseFloat(editCostStr.replace(/\D/g, "")) / 100 || 0;
+    if (!editClientName.trim() || !editDescription.trim() || valueNum < 0) return;
+
+    const updatedDeal: Deal = {
+      id: editingDeal.id,
+      clientName: editClientName.trim(),
+      serviceDescription: editDescription.trim(),
+      value: valueNum,
+      cost: costNum,
+      stage: editStage,
+      date: editDate,
+      photoBefore: editPhotoBefore || undefined,
+      photoAfter: editPhotoAfter || undefined,
+    };
+
+    // 1. Update deals list
+    setDeals((prev: Deal[]) =>
+      prev.map((d) => (d.id === editingDeal.id ? updatedDeal : d))
+    );
+
+    // 2. Update contact's updatedAt to represent updated service date
+    if (setContacts) {
+      setContacts((prevContacts) =>
+        prevContacts.map((c) => {
+          if (c.name.trim().toLowerCase() === editClientName.trim().toLowerCase()) {
+            try {
+              const serviceDateIso = new Date(updatedDeal.date + "T12:00:00").toISOString();
+              return {
+                ...c,
+                updatedAt: serviceDateIso,
+                lastContact: updatedDeal.date,
+              };
+            } catch (err) {
+              console.error("Error formatting service date to ISO", err);
+            }
+          }
+          return c;
+        })
+      );
+    }
+
+    // 3. Log Activity
+    const newActivity: Activity = {
+      id: generateActivityId(editingDeal.id, "update"),
+      type: "contact",
+      title: `Serviço editado: ${updatedDeal.serviceDescription}`,
+      sub: `Cliente: ${updatedDeal.clientName} | Estágio: ${updatedDeal.stage} | Valor: R$ ${formatBRLValue(updatedDeal.value)}`,
+      time: "Agora mesmo",
+    };
+    setActivities((v: Activity[]) => [newActivity, ...v]);
+
+    // Cleanup
+    setEditingDeal(null);
+  };
+
+  const filteredEditContacts = (contacts || []).filter((c) =>
+    c.name.toLowerCase().includes(editClientName.toLowerCase())
+  );
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "before" | "after") => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -358,6 +469,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
                                   onClick={() => setActiveModalImage(deal.photoBefore!)}
                                   className="relative h-12 rounded bg-slate-50 border border-slate-200 overflow-hidden cursor-pointer group"
                                   title="Expandir Foto Antes"
+                                  id={`deal-before-img-btn-${deal.id}`}
                                 >
                                   <img 
                                     src={deal.photoBefore} 
@@ -380,6 +492,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
                                   onClick={() => setActiveModalImage(deal.photoAfter!)}
                                   className="relative h-12 rounded bg-slate-50 border border-slate-200 overflow-hidden cursor-pointer group"
                                   title="Expandir Foto Depois"
+                                  id={`deal-after-img-btn-${deal.id}`}
                                 >
                                   <img 
                                     src={deal.photoAfter} 
@@ -400,6 +513,16 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
                           </div>
                         )}
                       </div>
+
+                      {stage === "Realizado" && (
+                        <button
+                          onClick={() => handleOpenEditModal(deal)}
+                          className="mt-2.5 w-full py-1.5 bg-slate-100 hover:bg-slate-200 hover:border-slate-300 border border-slate-200/80 text-slate-750 text-[11px] font-bold rounded flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          id={`btn-edit-realizado-${deal.id}`}
+                        >
+                          ✏️ Editar Serviço
+                        </button>
+                      )}
 
                       {/* Direction arrow shift controls */}
                       <div className="flex justify-between items-center mt-3 pt-1 border-t border-dotted border-slate-200 bg-slate-50 px-1 py-0.5 rounded">
@@ -638,6 +761,215 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
           </div>
         </div>
       )}
+
+      {/* EDIT REALIZADO DEAL OVERLAY */}
+      {editingDeal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-xs animate-fadeIn" id="edit-deal-modal">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-900">Editar Serviço</h3>
+              <button onClick={() => setEditingDeal(null)} className="text-slate-400 hover:text-black font-bold" id="btn-close-edit-deal">✕</button>
+            </div>
+
+            <form onSubmit={handleUpdateDeal} className="space-y-4">
+              {/* Autocomplete do Cliente */}
+              <div className="relative">
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Cliente</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Nome do cliente (ou busque na lista)..."
+                  value={editClientName}
+                  onChange={(e) => {
+                    setEditClientName(e.target.value);
+                    setShowEditClientSuggestions(true);
+                  }}
+                  onFocus={() => setShowEditClientSuggestions(true)}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                />
+                {showEditClientSuggestions && (
+                  <div className="absolute z-20 w-full bg-white border border-slate-200 rounded-md mt-1 max-h-40 overflow-y-auto shadow-lg">
+                    {filteredEditContacts.map((contact) => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        onClick={() => {
+                          setEditClientName(contact.name);
+                          setShowEditClientSuggestions(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 font-medium border-b border-slate-100 last:border-b-0 cursor-pointer flex flex-col"
+                      >
+                        <span className="font-bold">{contact.name}</span>
+                        <span className="text-[10px] text-slate-400">{contact.email}</span>
+                      </button>
+                    ))}
+                    {filteredEditContacts.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-slate-500 italic">Nenhum cliente correspondente. Digite para criar novo.</div>
+                    )}
+                  </div>
+                )}
+                {showEditClientSuggestions && editClientName.trim() !== "" && (
+                  <div className="flex items-center justify-between text-[10px] bg-slate-100 px-2 py-1.5 rounded mt-1">
+                    <span className="text-slate-600">Usando o nome digitado</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditClientSuggestions(false)}
+                      className="text-blue-600 font-bold hover:underline"
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Descrição do serviço */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Descrição do Serviço</label>
+                <textarea
+                  required
+                  placeholder="Ex: Lavagem de sofá retrátil 3 lugares com impermeabilização"
+                  rows={2}
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium resize-none"
+                />
+              </div>
+
+              {/* Data */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Data do Serviço</label>
+                <input
+                  type="date"
+                  required
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-medium"
+                />
+              </div>
+
+              {/* Estágio do Serviço */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-550 block mb-1">Estágio do Serviço</label>
+                <select
+                  value={editStage}
+                  onChange={(e) => setEditStage(e.target.value as any)}
+                  className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs outline-none focus:bg-white text-slate-850 font-bold"
+                >
+                  {STAGES.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Valores em colunas */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Valor Cobrado</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="R$ 0,00"
+                    value={editValueStr}
+                    onChange={(e) => setEditValueStr(formatToBRL(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-800 font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Valor Gasto p/ Realizar <span className="text-slate-400 font-normal">(Opcional)</span></label>
+                  <input
+                    type="text"
+                    placeholder="R$ 0,00"
+                    value={editCostStr}
+                    onChange={(e) => setEditCostStr(formatToBRL(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded text-xs focus:bg-white outline-none text-slate-850 font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Fotos do Serviço (Antes e Depois) */}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Foto Antes <span className="text-slate-400 font-normal">(Opcional)</span></label>
+                  <div className="flex flex-col gap-2">
+                    {editPhotoBefore ? (
+                      <div className="relative w-full h-24 rounded border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center group">
+                        <img src={editPhotoBefore} alt="Antes Preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setEditPhotoBefore("")}
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-24 border border-dashed border-slate-200 rounded cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-lg">📷</span>
+                        <span className="text-[9px] text-slate-500 font-bold mt-1">Carregar Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleEditPhotoUpload(e, "before")}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-550 block mb-1">Foto Depois <span className="text-slate-400 font-normal">(Opcional)</span></label>
+                  <div className="flex flex-col gap-2">
+                    {editPhotoAfter ? (
+                      <div className="relative w-full h-24 rounded border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center group">
+                        <img src={editPhotoAfter} alt="Depois Preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setEditPhotoAfter("")}
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-24 border border-dashed border-slate-200 rounded cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-lg">📷</span>
+                        <span className="text-[9px] text-slate-500 font-bold mt-1">Carregar Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleEditPhotoUpload(e, "after")}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end border-t border-slate-100 pt-4 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setEditingDeal(null)}
+                  className="px-4 py-2 border border-slate-200 text-slate-650 hover:bg-slate-50 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                  id="btn-cancel-edit-deal"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-850 text-white text-xs font-bold rounded-lg transition-all shadow-md cursor-pointer"
+                  id="btn-submit-edit-deal"
+                >
+                  Salvar Alterações
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* FULL SCREEN PHOTO LIGHT MODAL REVIEW */}
       {activeModalImage && (
         <div 
