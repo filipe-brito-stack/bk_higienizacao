@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Deal, Activity, Contact } from "@/lib/types";
+import { getCurrentDateFormatted, formatDateToBR } from "@/lib/utils";
 
 interface PipelineTabProps {
   deals: Deal[];
@@ -201,7 +202,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       type: "contact",
       title: `Serviço editado: ${updatedDeal.serviceDescription}`,
       sub: `Cliente: ${updatedDeal.clientName} | Estágio: ${updatedDeal.stage} | Valor: R$ ${formatBRLValue(updatedDeal.value)}`,
-      time: "Agora mesmo",
+      time: getCurrentDateFormatted(),
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
 
@@ -269,7 +270,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       type: updatedStage === "Realizado" ? "closed" : "contact",
       title: `Estágio alterado: ${deal.serviceDescription}`,
       sub: `Progresso: ${deal.stage} → <b>${updatedStage}</b> (R$ ${formatBRLValue(deal.value)})`,
-      time: "Agora mesmo",
+      time: getCurrentDateFormatted(),
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
   };
@@ -323,7 +324,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       type: "contact",
       title: `Serviço cadastrado: ${createdDeal.serviceDescription}`,
       sub: `Cliente: ${createdDeal.clientName} | Estágio: ${createdDeal.stage} | Valor: R$ ${formatBRLValue(createdDeal.value)}`,
-      time: "Agora mesmo",
+      time: getCurrentDateFormatted(),
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
 
@@ -355,7 +356,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
       type: "contact",
       title: `Serviço removido: ${description}`,
       sub: `Serviço removido do fluxo de trabalho.`,
-      time: "Agora mesmo",
+      time: getCurrentDateFormatted(),
     };
     setActivities((v: Activity[]) => [newActivity, ...v]);
   };
@@ -456,7 +457,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
                         </div>
                         <div className="flex justify-between text-[9px] text-slate-400 mt-1">
                           <span>Data do serviço:</span>
-                          <span className="font-semibold">{deal.date}</span>
+                          <span className="font-semibold">{formatDateToBR(deal.date)}</span>
                         </div>
 
                         {/* Imagens de Evidência (Antes e Depois) */}

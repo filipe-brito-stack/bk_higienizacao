@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Contact, Activity } from "@/lib/types";
 import { Search } from "lucide-react";
+import { getCurrentDateFormatted } from "@/lib/utils";
 
 interface ContactsTabProps {
   contacts: Contact[];
@@ -261,7 +262,7 @@ export default function ContactsTab({
       type: "contact",
       title: `Novo Cliente Criado: ${newContact.name}`,
       sub: `Adicionado como representante dinâmico`,
-      time: "Agora mesmo",
+      time: getCurrentDateFormatted(),
     };
     setActivities((prev) => [newActivity, ...prev]);
 
@@ -318,7 +319,7 @@ export default function ContactsTab({
       type: "contact",
       title: `Perfil do Cliente Modificado: ${editableContact.name}`,
       sub: `Parâmetros e contatos sincronizados`,
-      time: "Agora mesmo",
+      time: getCurrentDateFormatted(),
     };
     setActivities((prev) => [newActivity, ...prev]);
 
@@ -338,7 +339,7 @@ export default function ContactsTab({
       type: "contact",
       title: `Cliente Excluído: ${backupName}`,
       sub: `Removido do banco de dados com segurança`,
-      time: "Agora mesmo",
+      time: getCurrentDateFormatted(),
     };
     setActivities((prev) => [newActivity, ...prev]);
 

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Contact, Deal, Task, Activity, CRMGoals } from "@/lib/types";
 import { DollarSign, Filter, Briefcase, Timer, TrendingUp, TrendingDown, Sparkles, Info, CheckCircle2, Mail, UserPlus, Phone, Award, AlertTriangle, Trash2 } from "lucide-react";
+import { getCurrentDateFormatted } from "@/lib/utils";
 
 function formatBRL(value: string | number): string {
   if (value === undefined || value === null || value === "") return "";
@@ -295,7 +296,7 @@ export default function DashboardTab({
       type: "contact",
       title: `Tarefa criada: ${newTaskTitle}`,
       sub: `Definida com prioridade ${newTaskPriority === "Urgent" ? "Urgente" : newTaskPriority === "Medium" ? "Média" : "Baixa"}${valorMsg}`,
-      time: "Agora mesmo",
+      time: getCurrentDateFormatted(),
     };
     setActivities((prev) => [newActivity, ...prev]);
 
@@ -554,7 +555,7 @@ export default function DashboardTab({
               </div>
               {urgentTasksCount > 0 && (
                 <span className="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[11px] font-semibold animate-pulse">
-                  {urgentTasksCount} Urgentes
+                  {urgentTasksCount} Urgente(s)
                 </span>
               )}
             </div>
@@ -646,13 +647,13 @@ export default function DashboardTab({
                     </div>
                     <div className="flex-shrink-0 self-center">
                       {task.priority === "Urgent" && (
-                        <span className="text-[9px] font-extrabold text-rose-700 bg-rose-50 px-2 py-1 border border-rose-100 rounded-md tracking-wider">HOJE</span>
+                        <span className="text-[9px] font-extrabold text-rose-700 bg-rose-50 px-2 py-1 border border-rose-100 rounded-md tracking-wider">URGENTE</span>
                       )}
                       {task.priority === "Medium" && (
-                        <span className="text-[9px] font-extrabold text-amber-700 bg-amber-50 px-2 py-1 border border-amber-100 rounded-md tracking-wider">MÉDIO</span>
+                        <span className="text-[9px] font-extrabold text-amber-700 bg-amber-50 px-2 py-1 border border-amber-100 rounded-md tracking-wider">MEDIA</span>
                       )}
                       {task.priority === "Low" && (
-                        <span className="text-[9px] font-bold text-slate-650 bg-slate-100 px-2 py-1 border border-slate-200 rounded-md tracking-wider">AVULSO</span>
+                        <span className="text-[9px] font-bold text-slate-650 bg-slate-100 px-2 py-1 border border-slate-200 rounded-md tracking-wider">BAIXA</span>
                       )}
                     </div>
                   </div>
