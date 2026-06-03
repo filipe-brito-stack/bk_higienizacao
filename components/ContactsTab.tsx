@@ -43,6 +43,7 @@ export default function ContactsTab({
   const [editBirthDateInput, setEditBirthDateInput] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
+  const [confirmDeleteContactId, setConfirmDeleteContactId] = useState<string | null>(null);
 
   // Validation & Formatting States
   const [phoneError, setPhoneError] = useState("");
@@ -719,15 +720,28 @@ export default function ContactsTab({
               <div className="flex gap-2 justify-between border-t border-slate-100 pt-4 mt-6">
                 <button
                   type="button"
-                  onClick={() => handleDeleteContact(editableContact.id)}
-                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition-colors border border-rose-100 cursor-pointer"
+                  onClick={() => {
+                    if (confirmDeleteContactId === editableContact.id) {
+                      handleDeleteContact(editableContact.id);
+                      setConfirmDeleteContactId(null);
+                    } else {
+                      setConfirmDeleteContactId(editableContact.id);
+                    }
+                  }}
+                  onMouseLeave={() => setConfirmDeleteContactId(null)}
+                  className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors border cursor-pointer ${
+                    confirmDeleteContactId === editableContact.id
+                      ? "bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-800"
+                      : "bg-rose-50 hover:bg-rose-100 border-rose-100 text-rose-700"
+                  }`}
+                  title="Clique novamente para confirmar a exclusão"
                 >
-                  Excluir Cliente
+                  {confirmDeleteContactId === editableContact.id ? "Confirmar exclusão?" : "Excluir Cliente"}
                 </button>
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => { setShowEditModal(false); setEditableContact(null); }}
+                    onClick={() => { setShowEditModal(false); setEditableContact(null); setConfirmDeleteContactId(null); }}
                     className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold rounded-lg transition-colors cursor-pointer"
                   >
                     Cancelar

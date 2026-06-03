@@ -114,6 +114,7 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
   const [editCostStr, setEditCostStr] = useState("");
   const [editPhotoBefore, setEditPhotoBefore] = useState("");
   const [editPhotoAfter, setEditPhotoAfter] = useState("");
+  const [dealIdToConfirmDelete, setDealIdToConfirmDelete] = useState<string | null>(null);
 
   const handleEditPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "before" | "after") => {
     const file = e.target.files?.[0];
@@ -432,10 +433,22 @@ export default function PipelineTab({ deals, setDeals, setActivities, contacts =
                       <div className="flex justify-between items-start gap-1">
                         <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">{deal.clientName}</span>
                         <button
-                          onClick={() => handleDeleteDeal(deal.id, deal.serviceDescription)}
-                          className="opacity-0 group-hover:opacity-100 text-[10px] text-rose-600 font-bold hover:underline"
+                          onClick={() => {
+                            if (dealIdToConfirmDelete === deal.id) {
+                              handleDeleteDeal(deal.id, deal.serviceDescription);
+                              setDealIdToConfirmDelete(null);
+                            } else {
+                              setDealIdToConfirmDelete(deal.id);
+                            }
+                          }}
+                          onMouseLeave={() => setDealIdToConfirmDelete(null)}
+                          className={`text-[10px] font-bold transition-all ${
+                            dealIdToConfirmDelete === deal.id
+                              ? "text-amber-700 bg-amber-50 px-1.5 py-0.5 border border-amber-300 rounded text-[9px] animate-pulse cursor-pointer"
+                              : "opacity-0 group-hover:opacity-100 text-rose-600 hover:underline cursor-pointer"
+                          }`}
                         >
-                          ✕
+                          {dealIdToConfirmDelete === deal.id ? "Excluir?" : "✕"}
                         </button>
                       </div>
                       <p className="text-xs font-bold text-slate-800 leading-tight mt-0.5">{deal.serviceDescription}</p>

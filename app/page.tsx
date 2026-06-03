@@ -118,9 +118,10 @@ export default function RootPage() {
   // Supabase Real-time Sync States
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"connected" | "offline" | "error" | "idle">("idle");
+  const [isLocalOnly, setIsLocalOnly] = useState(false);
 
   const syncFromDatabase = async (silent = false) => {
-    if (!supabase) {
+    if (!supabase || isLocalOnly) {
       setSyncStatus("offline");
       return;
     }
@@ -324,6 +325,17 @@ export default function RootPage() {
         console.error("Error loading cached profile pic", e);
       }
 
+      let isLocal = false;
+      try {
+        const cachedLoggedInMethod = localStorage.getItem("nexus_logged_in_method");
+        if (cachedLoggedInMethod === "local") {
+          setIsLocalOnly(true);
+          isLocal = true;
+        }
+      } catch (e) {
+        console.error("Error loading cached login method state", e);
+      }
+
       try {
         const cachedLoggedIn = localStorage.getItem("nexus_logged_in") === "true";
         if (cachedLoggedIn) setIsAuthenticated(true);
@@ -331,8 +343,8 @@ export default function RootPage() {
         console.error("Error loading cached auth state", e);
       }
 
-      // 2. Load fresh updates from Supabase if keys are configured
-      if (supabase) {
+      // 2. Load fresh updates from Supabase if keys are configured and we are not in local mode
+      if (supabase && !isLocal) {
         setIsSyncing(true);
         try {
           const { data: dbContacts, error: contactsErr } = await supabase
@@ -404,7 +416,7 @@ export default function RootPage() {
     if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_contacts", JSON.stringify(contacts));
 
-    const sb = supabase;
+    const sb = isLocalOnly ? null : supabase;
     if (sb) {
       const dbRows = contacts.map(c => mapContactToDB(c));
       if (dbRows.length > 0) {
@@ -426,102 +438,107 @@ export default function RootPage() {
         });
       }
     }
-  }, [contacts, mounted, isSyncing]);
+  }, [contacts, mounted, isSyncing, isLocalOnly]);
 
   useEffect(() => {
     if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_deals", JSON.stringify(deals));
 
-    if (supabase) {
+    const sb = isLocalOnly ? null : supabase;
+    if (sb) {
       const dbRows = deals.map(d => mapDealToDB(d));
       if (dbRows.length > 0) {
-        supabase.from("deals").upsert(dbRows).then(({ error }) => {
+        sb.from("deals").upsert(dbRows).then(({ error }) => {
           if (error) console.error("Error syncing deals:", error);
         });
       }
       
       const currentIds = deals.map(d => d.id).filter(Boolean);
       if (currentIds.length > 0) {
-        supabase.from("deals").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+        sb.from("deals").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
           if (error) console.error("Error pruning remote deals:", error);
         });
       } else {
-        supabase.from("deals").delete().neq("id", "").then(({ error }) => {
+        sb.from("deals").delete().neq("id", "").then(({ error }) => {
           if (error) console.error("Error pruning all remote deals:", error);
         });
       }
     }
-  }, [deals, mounted, isSyncing]);
+  }, [deals, mounted, isSyncing, isLocalOnly]);
 
   useEffect(() => {
     if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_tasks", JSON.stringify(tasks));
 
-    if (supabase) {
+    const sb = isLocalOnly ? null : supabase;
+    if (sb) {
       const dbRows = tasks.map(t => mapTaskToDB(t));
       if (dbRows.length > 0) {
-        supabase.from("tasks").upsert(dbRows).then(({ error }) => {
+        sb.from("tasks").upsert(dbRows).then(({ error }) => {
           if (error) console.error("Error syncing tasks:", error);
         });
       }
       
       const currentIds = tasks.map(t => t.id).filter(Boolean);
       if (currentIds.length > 0) {
-        supabase.from("tasks").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+        sb.from("tasks").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
           if (error) console.error("Error pruning remote tasks:", error);
         });
       } else {
-        supabase.from("tasks").delete().neq("id", "").then(({ error }) => {
+        sb.from("tasks").delete().neq("id", "").then(({ error }) => {
           if (error) console.error("Error pruning all remote tasks:", error);
         });
       }
     }
-  }, [tasks, mounted, isSyncing]);
+  }, [tasks, mounted, isSyncing, isLocalOnly]);
 
   useEffect(() => {
     if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_activities", JSON.stringify(activities));
 
-    if (supabase) {
+    const sb = isLocalOnly ? null : supabase;
+    if (sb) {
       const dbRows = activities.map(a => mapActivityToDB(a));
       if (dbRows.length > 0) {
-        supabase.from("activities").upsert(dbRows).then(({ error }) => {
+        sb.from("activities").upsert(dbRows).then(({ error }) => {
           if (error) console.error("Error syncing activities:", error);
         });
       }
       
       const currentIds = activities.map(a => a.id).filter(Boolean);
       if (currentIds.length > 0) {
-        supabase.from("activities").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+        sb.from("activities").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
           if (error) console.error("Error pruning remote activities:", error);
         });
       } else {
-        supabase.from("activities").delete().neq("id", "").then(({ error }) => {
+        sb.from("activities").delete().neq("id", "").then(({ error }) => {
           if (error) console.error("Error pruning all remote activities:", error);
         });
       }
     }
-  }, [activities, mounted, isSyncing]);
+  }, [activities, mounted, isSyncing, isLocalOnly]);
 
   useEffect(() => {
     if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_goals", JSON.stringify(goals));
 
-    if (supabase) {
+    const sb = isLocalOnly ? null : supabase;
+    if (sb) {
       const dbRow = mapGoalsToDB(goals);
-      supabase.from("goals").upsert([dbRow]).then(({ error }) => {
+      sb.from("goals").upsert([dbRow]).then(({ error }) => {
         if (error) console.error("Error syncing goals:", error);
       });
     }
-  }, [goals, mounted, isSyncing]);
+  }, [goals, mounted, isSyncing, isLocalOnly]);
 
   useEffect(() => {
     if (!mounted || isSyncing) return;
     localStorage.setItem("nexus_profile_name", profileName);
     localStorage.setItem("nexus_profile_pic", profilePic);
 
-    if (supabase) {
-      supabase.from("profiles").upsert({
+    const sb = isLocalOnly ? null : supabase;
+    if (sb) {
+      sb.from("profiles").upsert({
         id: "bruno",
         name: profileName,
         avatar_url: profilePic,
@@ -530,7 +547,7 @@ export default function RootPage() {
         if (error) console.error("Error syncing profile:", error);
       });
     }
-  }, [profileName, profilePic, mounted, isSyncing]);
+  }, [profileName, profilePic, mounted, isSyncing, isLocalOnly]);
 
 
   // Execute review list click function on dashboard
@@ -567,10 +584,12 @@ export default function RootPage() {
       const formattedName = usernameInput.trim().toLowerCase() === "bruno" ? "Bruno Kawaguchi" : usernameInput.trim();
       setProfileName(formattedName);
       setIsAuthenticated(true);
+      setIsLocalOnly(true);
       setLoginError("");
       setIsLoggingIn(false);
       if (rememberMe) {
         localStorage.setItem("nexus_logged_in", "true");
+        localStorage.setItem("nexus_logged_in_method", "local");
         localStorage.setItem("nexus_profile_name", formattedName);
       }
       return;
@@ -598,10 +617,12 @@ export default function RootPage() {
           
           setProfileName(displayName);
           setIsAuthenticated(true);
+          setIsLocalOnly(false);
           setLoginError("");
           setIsLoggingIn(false);
           if (rememberMe) {
             localStorage.setItem("nexus_logged_in", "true");
+            localStorage.setItem("nexus_logged_in_method", "supabase");
             localStorage.setItem("nexus_profile_name", displayName);
           }
         }
@@ -891,6 +912,8 @@ export default function RootPage() {
             onClick={() => {
               setIsAuthenticated(false);
               localStorage.removeItem("nexus_logged_in");
+              localStorage.removeItem("nexus_logged_in_method");
+              setIsLocalOnly(false);
               setSidebarOpen(false);
             }}
             className="flex items-center gap-4 px-4 py-3 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50/50 hover:text-rose-700 transition-all cursor-pointer mt-1"
@@ -916,27 +939,15 @@ export default function RootPage() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
-            {/* Supabase Force Sync Button */}
-            {mounted && (
-              <button
-                onClick={() => syncFromDatabase(false)}
-                disabled={isSyncing}
-                title="Sincronizar e carregar dados do banco de dados Supabase"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold tracking-tight uppercase transition-all ${
-                  isSyncing
-                    ? "bg-amber-50 border-amber-200 text-amber-600 cursor-wait animate-pulse"
-                    : syncStatus === "connected"
-                    ? "bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/50"
-                    : syncStatus === "error"
-                    ? "bg-rose-50 border-rose-100 text-rose-700 hover:bg-rose-100/50"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                } shadow-xs cursor-pointer active:scale-95`}
+            {/* Supabase Force Sync Button / Modo Local Indicator */}
+            {mounted && isLocalOnly && (
+              <span 
+                title="Você está conectado usando credenciais de demonstração off-line. A gravação no banco de dados Supabase foi bloqueada para evitar alterações indesejadas de teste"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-200 bg-amber-50 text-[10px] font-bold tracking-tight uppercase text-amber-700 select-none shadow-xs"
               >
-                <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
-                <span>
-                  {isSyncing ? "Puxando..." : syncStatus === "connected" ? "Atualizar Banco" : syncStatus === "error" ? "Erro" : "Puxar Banco"}
-                </span>
-              </button>
+                <Lock className="w-3 h-3 text-amber-600 animate-pulse" />
+                <span>Modo Local</span>
+              </span>
             )}
 
             {/* Active profile card */}

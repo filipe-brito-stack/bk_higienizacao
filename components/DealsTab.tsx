@@ -175,6 +175,7 @@ export default function DealsTab({
 }: DealsTabProps) {
   const [editingDealId, setEditingDealId] = useState<string | null>(null);
   const [dealIdToConfirmDelete, setDealIdToConfirmDelete] = useState<string | null>(null);
+  const [taskIdToConfirmDelete, setTaskIdToConfirmDelete] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [editCost, setEditCost] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -418,10 +419,21 @@ export default function DealsTab({
                           </button>
                           <span className="text-slate-200">|</span>
                           <button
-                            onClick={() => handleDeleteDeal(deal.id)}
-                            className="text-rose-600 font-bold hover:underline cursor-pointer text-[10px]"
+                            onClick={() => {
+                              if (dealIdToConfirmDelete === deal.id) {
+                                handleDeleteDeal(deal.id);
+                              } else {
+                                setDealIdToConfirmDelete(deal.id);
+                              }
+                            }}
+                            onMouseLeave={() => setDealIdToConfirmDelete(null)}
+                            className={`font-bold transition-colors cursor-pointer text-[10px] ${
+                              dealIdToConfirmDelete === deal.id
+                                ? "text-amber-650 bg-amber-50/75 px-1.5 py-0.5 rounded border border-amber-200"
+                                : "text-rose-600 hover:underline"
+                            }`}
                           >
-                            Excluir
+                            {dealIdToConfirmDelete === deal.id ? "Tem certeza?" : "Excluir"}
                           </button>
                         </div>
                       )}
@@ -527,10 +539,21 @@ export default function DealsTab({
                       </button>
                       <span className="text-slate-200 text-xs">|</span>
                       <button
-                        onClick={() => handleDeleteDeal(deal.id)}
-                        className="text-[10px] text-rose-600 font-bold hover:underline cursor-pointer"
+                        onClick={() => {
+                          if (dealIdToConfirmDelete === deal.id) {
+                            handleDeleteDeal(deal.id);
+                          } else {
+                            setDealIdToConfirmDelete(deal.id);
+                          }
+                        }}
+                        onMouseLeave={() => setDealIdToConfirmDelete(null)}
+                        className={`text-[10px] font-bold transition-colors cursor-pointer ${
+                          dealIdToConfirmDelete === deal.id
+                            ? "text-amber-650 bg-amber-50/75 px-1.5 py-0.5 rounded border border-amber-200"
+                            : "text-rose-600 hover:underline"
+                        }`}
                       >
-                        Excluir
+                        {dealIdToConfirmDelete === deal.id ? "Tem certeza?" : "Excluir"}
                       </button>
                     </div>
                   )}
@@ -737,10 +760,22 @@ export default function DealsTab({
                               <span className="text-slate-200">|</span>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteTask(task.id)}
-                                className="text-rose-600 font-bold hover:underline cursor-pointer text-[10px]"
+                                onClick={() => {
+                                  if (taskIdToConfirmDelete === task.id) {
+                                    handleDeleteTask(task.id);
+                                    setTaskIdToConfirmDelete(null);
+                                  } else {
+                                    setTaskIdToConfirmDelete(task.id);
+                                  }
+                                }}
+                                onMouseLeave={() => setTaskIdToConfirmDelete(null)}
+                                className={`font-bold transition-colors cursor-pointer text-[10px] ${
+                                  taskIdToConfirmDelete === task.id
+                                    ? "text-amber-650 bg-amber-50/75 px-1.5 py-0.5 rounded border border-amber-200"
+                                    : "text-rose-600 hover:underline"
+                                }`}
                               >
-                                Excluir
+                                {taskIdToConfirmDelete === task.id ? "Tem certeza?" : "Excluir"}
                               </button>
                             </div>
                           )}
@@ -898,10 +933,22 @@ export default function DealsTab({
                           <span className="text-slate-200 text-xs">|</span>
                           <button
                             type="button"
-                            onClick={() => handleDeleteTask(task.id)}
-                            className="text-[10px] text-rose-600 font-bold hover:underline cursor-pointer"
+                            onClick={() => {
+                              if (taskIdToConfirmDelete === task.id) {
+                                handleDeleteTask(task.id);
+                                setTaskIdToConfirmDelete(null);
+                              } else {
+                                setTaskIdToConfirmDelete(task.id);
+                              }
+                            }}
+                            onMouseLeave={() => setTaskIdToConfirmDelete(null)}
+                            className={`text-[10px] font-bold transition-colors cursor-pointer ${
+                              taskIdToConfirmDelete === task.id
+                                ? "text-amber-650 bg-amber-50/75 px-1.5 py-0.5 rounded border border-amber-200"
+                                : "text-rose-600 hover:underline"
+                            }`}
                           >
-                            Excluir
+                            {taskIdToConfirmDelete === task.id ? "Tem certeza?" : "Excluir"}
                           </button>
                         </div>
                       </>
