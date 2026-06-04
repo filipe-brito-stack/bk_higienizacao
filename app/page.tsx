@@ -134,7 +134,7 @@ export default function RootPage() {
         .from("contacts")
         .select("*");
       if (contactsErr) throw contactsErr;
-      if (dbContacts && dbContacts.length > 0) {
+      if (dbContacts) {
         setContacts(dbContacts.map(mapContactFromDB));
       }
 
@@ -143,7 +143,7 @@ export default function RootPage() {
         .from("deals")
         .select("*");
       if (dealsErr) throw dealsErr;
-      if (dbDeals && dbDeals.length > 0) {
+      if (dbDeals) {
         setDeals(dbDeals.map(mapDealFromDB));
       }
 
@@ -152,7 +152,7 @@ export default function RootPage() {
         .from("tasks")
         .select("*");
       if (tasksErr) throw tasksErr;
-      if (dbTasks && dbTasks.length > 0) {
+      if (dbTasks) {
         setTasks(dbTasks.map(mapTaskFromDB));
       }
 
@@ -350,21 +350,21 @@ export default function RootPage() {
           const { data: dbContacts, error: contactsErr } = await supabase
             .from("contacts")
             .select("*");
-          if (!contactsErr && dbContacts && dbContacts.length > 0) {
+          if (!contactsErr && dbContacts) {
             setContacts(dbContacts.map(mapContactFromDB));
           }
 
           const { data: dbDeals, error: dealsErr } = await supabase
             .from("deals")
             .select("*");
-          if (!dealsErr && dbDeals && dbDeals.length > 0) {
+          if (!dealsErr && dbDeals) {
             setDeals(dbDeals.map(mapDealFromDB));
           }
 
           const { data: dbTasks, error: tasksErr } = await supabase
             .from("tasks")
             .select("*");
-          if (!tasksErr && dbTasks && dbTasks.length > 0) {
+          if (!tasksErr && dbTasks) {
             setTasks(dbTasks.map(mapTaskFromDB));
           }
 
@@ -429,7 +429,7 @@ export default function RootPage() {
       
       const currentIds = contacts.map(c => c.id).filter(Boolean);
       if (currentIds.length > 0) {
-        sb.from("contacts").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+        sb.from("contacts").delete().not("id", "in", `(${currentIds.join(",")})`).then(({ error }) => {
           if (error) console.error("Error pruning remote contacts:", error);
         });
       } else {
@@ -455,7 +455,7 @@ export default function RootPage() {
       
       const currentIds = deals.map(d => d.id).filter(Boolean);
       if (currentIds.length > 0) {
-        sb.from("deals").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+        sb.from("deals").delete().not("id", "in", `(${currentIds.join(",")})`).then(({ error }) => {
           if (error) console.error("Error pruning remote deals:", error);
         });
       } else {
@@ -481,7 +481,7 @@ export default function RootPage() {
       
       const currentIds = tasks.map(t => t.id).filter(Boolean);
       if (currentIds.length > 0) {
-        sb.from("tasks").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+        sb.from("tasks").delete().not("id", "in", `(${currentIds.join(",")})`).then(({ error }) => {
           if (error) console.error("Error pruning remote tasks:", error);
         });
       } else {
@@ -507,7 +507,7 @@ export default function RootPage() {
       
       const currentIds = activities.map(a => a.id).filter(Boolean);
       if (currentIds.length > 0) {
-        sb.from("activities").delete().filter("id", "not.in", `(${currentIds.join(",")})`).then(({ error }) => {
+        sb.from("activities").delete().not("id", "in", `(${currentIds.join(",")})`).then(({ error }) => {
           if (error) console.error("Error pruning remote activities:", error);
         });
       } else {
